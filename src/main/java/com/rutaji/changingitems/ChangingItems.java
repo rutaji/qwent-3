@@ -30,13 +30,14 @@ public final class ChangingItems extends JavaPlugin {
                                 .executes(ctx -> {
                                     Player player = (Player) ctx.getSource().getExecutor();
                                     GameState state = games.get(player);
-                                    dialog.show(player, state != null ? state : games.start(player));
+                                    games.setViewing(player, null);
+                                    dialog.show(player, state != null ? state : games.start(player), null);
                                     return 1;
                                 })
                                 .then(Commands.literal("new")
                                         .executes(ctx -> {
                                             Player player = (Player) ctx.getSource().getExecutor();
-                                            dialog.show(player, games.start(player));
+                                            dialog.show(player, games.start(player), null);
                                             return 1;
                                         }))
                                 .build(),

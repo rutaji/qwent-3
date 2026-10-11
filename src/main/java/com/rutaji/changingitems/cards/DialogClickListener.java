@@ -7,7 +7,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-/** Handles clicks on the game dialog ("qwent:tile/N", "qwent:hand/N", "qwent:keep", "qwent:close"). */
+/**
+ * Handles clicks on the game dialog: "qwent:tile/N", "qwent:hand/N", "qwent:keep", "qwent:view/deck",
+ * "qwent:view/graveyard", "qwent:back", "qwent:close".
+ */
 public final class DialogClickListener implements Listener {
     private final Plugin plugin;
     private final GameManager games;
@@ -45,8 +48,17 @@ public final class DialogClickListener implements Listener {
         }
         if (path.equals("close")) {
             // Sent on Esc; the game is kept and /qwent resumes it.
+            games.setViewing(player, null);
             player.closeDialog();
             return;
+        }
+        if (path.startsWith("view/")) {
+            games.setViewing(player, path.equals("view/deck") ? Pile.DECK : Pile.GRAVEYARD);
+            dialog.show(player, state, games.viewing(player));
+            return;
+        }
+        if (path.equals("back")) {
+            games.setViewing(player, null);
         }
         if (path.equals("keep")) {
             state.endMulligan();
@@ -66,6 +78,6 @@ public final class DialogClickListener implements Listener {
                 default -> { }
             }
         }
-        dialog.show(player, state);
+        dialog.show(player, state, games.viewing(player));
     }
 }

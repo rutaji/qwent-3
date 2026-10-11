@@ -21,6 +21,11 @@ public interface Effect {
 
     boolean isValidTarget(GameState state, int tile);
 
+    /** True to resolve without asking when exactly one tile is a valid target (e.g. "the lowest monster"). */
+    default boolean autoPickSingleTarget() {
+        return false;
+    }
+
     default boolean hasValidTargets(GameState state) {
         if (!needsTarget()) {
             return true;

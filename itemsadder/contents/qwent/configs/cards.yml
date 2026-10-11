@@ -2,60 +2,72 @@
 info:
   namespace: qwent
 font_images:
-  card_peasant_big:
-    path: font/cards/peasant_big.png
-    scale_ratio: 96
-    y_position: 10
   card_peasant_text:
-    path: font/cards/peasant_big.png
+    path: font/cards/peasant.png
     scale_ratio: 60
     y_position: 7
-  card_archer_big:
-    path: font/cards/archer_big.png
-    scale_ratio: 96
-    y_position: 10
   card_archer_text:
-    path: font/cards/archer_big.png
+    path: font/cards/archer.png
     scale_ratio: 60
     y_position: 7
-  card_knight_big:
-    path: font/cards/knight_big.png
-    scale_ratio: 96
-    y_position: 10
   card_knight_text:
-    path: font/cards/knight_big.png
+    path: font/cards/knight.png
     scale_ratio: 60
     y_position: 7
-  card_mage_big:
-    path: font/cards/mage_big.png
-    scale_ratio: 96
-    y_position: 10
   card_mage_text:
-    path: font/cards/mage_big.png
+    path: font/cards/mage.png
     scale_ratio: 60
     y_position: 7
-  card_dragon_big:
-    path: font/cards/dragon_big.png
-    scale_ratio: 96
-    y_position: 10
   card_dragon_text:
-    path: font/cards/dragon_big.png
+    path: font/cards/dragon.png
     scale_ratio: 60
     y_position: 7
-  card_arrow_big:
-    path: font/cards/arrow_big.png
-    scale_ratio: 96
-    y_position: 10
   card_arrow_text:
-    path: font/cards/arrow_big.png
+    path: font/cards/arrow.png
     scale_ratio: 60
     y_position: 7
-  card_two_arrows_big:
-    path: font/cards/two_arrows_big.png
-    scale_ratio: 96
-    y_position: 10
   card_two_arrows_text:
-    path: font/cards/two_arrows_big.png
+    path: font/cards/two_arrows.png
+    scale_ratio: 60
+    y_position: 7
+  card_gravel_text:
+    path: font/cards/gravel.png
+    scale_ratio: 60
+    y_position: 7
+  card_lightning_text:
+    path: font/cards/lightning.png
+    scale_ratio: 60
+    y_position: 7
+  card_skeleton_text:
+    path: font/cards/skeleton.png
+    scale_ratio: 60
+    y_position: 7
+  card_evil_goblin_text:
+    path: font/cards/evil_goblin.png
+    scale_ratio: 60
+    y_position: 7
+  card_boar_text:
+    path: font/cards/boar.png
+    scale_ratio: 60
+    y_position: 7
+  card_bear_text:
+    path: font/cards/bear.png
+    scale_ratio: 60
+    y_position: 7
+  card_basic_zombie_text:
+    path: font/cards/basic_zombie.png
+    scale_ratio: 60
+    y_position: 7
+  card_leader_zombie_text:
+    path: font/cards/leader_zombie.png
+    scale_ratio: 60
+    y_position: 7
+  card_horde_text:
+    path: font/cards/horde.png
+    scale_ratio: 60
+    y_position: 7
+  card_zombie_awakening_text:
+    path: font/cards/zombie_awakening.png
     scale_ratio: 60
     y_position: 7
   tile_empty_text:

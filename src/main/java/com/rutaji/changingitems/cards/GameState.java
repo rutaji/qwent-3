@@ -68,6 +68,11 @@ public final class GameState {
         return deck.size();
     }
 
+    /** The deck in draw order (top first). Don't show this order to the player. */
+    public List<CardType> deck() {
+        return Collections.unmodifiableList(deck);
+    }
+
     public List<CardType> graveyard() {
         return Collections.unmodifiableList(graveyard);
     }
@@ -229,13 +234,14 @@ public final class GameState {
         queue.addAll(monster.onPlay(unit));
     }
 
-    /** Reduces a unit's power; below 1 it is destroyed. */
+    /** Reduces a unit's power and queues its on-hurt effects; below 1 power it is destroyed (on-death after). */
     public void damage(int tile, int amount) {
         Unit unit = board[tile];
-        if (unit == null) {
+        if (unit == null || amount <= 0) {
             return;
         }
         unit.addPower(-amount);
+        queue.addAll(unit.type().onHurt(unit, amount));
         if (unit.power() < 1) {
             destroy(tile);
         }
@@ -264,6 +270,38 @@ public final class GameState {
         queue.addAll(effects);
     }
 
+    /** Puts an effect at the front of the queue, e.g. an effect that repeats itself ("play all ..."). */
+    public void queueNext(Effect effect) {
+        queue.addFirst(effect);
+    }
+
+    public boolean pileContains(Pile pile, CardType card) {
+        return pileList(pile).contains(card);
+    }
+
+    /** Takes one copy of a card out of the deck or graveyard; false if there is none. */
+    public boolean removeFromPile(Pile pile, CardType card) {
+        return pileList(pile).remove(card);
+    }
+
+    private List<CardType> pileList(Pile pile) {
+        return pile == Pile.DECK ? deck : graveyard;
+    }
+
+    /** The only valid target tile, or -1 if there are none or several. */
+    private int singleValidTarget(Effect effect) {
+        int found = -1;
+        for (int tile = 0; tile < BOARD_SIZE; tile++) {
+            if (effect.isValidTarget(this, tile)) {
+                if (found >= 0) {
+                    return -1;
+                }
+                found = tile;
+            }
+        }
+        return found;
+    }
+
     /** Resolves queued effects in order until one needs the player to pick a target. */
     private void resolveQueue() {
         int steps = 0;
@@ -276,7 +314,12 @@ public final class GameState {
             if (!effect.hasValidTargets(this)) {
                 queue.removeFirst();
             } else if (effect.needsTarget()) {
-                return;
+                int only = effect.autoPickSingleTarget() ? singleValidTarget(effect) : -1;
+                if (only < 0) {
+                    return;
+                }
+                queue.removeFirst();
+                effect.resolve(this, only);
             } else {
                 queue.removeFirst();
                 effect.resolve(this, -1);

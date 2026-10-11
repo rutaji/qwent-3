@@ -2,7 +2,9 @@ package com.rutaji.changingitems.cards;
 
 import com.rutaji.changingitems.cards.effect.BuffEffect;
 import com.rutaji.changingitems.cards.effect.DamageEffect;
+import com.rutaji.changingitems.cards.effect.DestroyExtremeEffect;
 import com.rutaji.changingitems.cards.effect.Effect;
+import com.rutaji.changingitems.cards.effect.PlayFromPileEffect;
 import com.rutaji.changingitems.cards.effect.SummonEffect;
 import org.jspecify.annotations.Nullable;
 
@@ -12,9 +14,10 @@ import java.util.Set;
 
 /**
  * All cards, defined at compile time. A card gives itself effects by overriding
- * {@link #onPlay} and/or {@link #onDeath} in its own body; the returned effects go into the effect queue.
+ * {@link #onPlay}, {@link #onHurt} and/or {@link #onDeath} in its own body; the returned effects go into the
+ * effect queue.
  *
- * Art: ItemsAdder font images "qwent:card_<name>_text" (board/hand) and "qwent:card_<name>_big" (tooltip).
+ * Art: ItemsAdder font image "qwent:card_<name>_text", made from textures/font/cards/<name>.png.
  */
 public enum CardType {
     PEASANT(Kind.MONSTER, "Peasant", 1, "P", "No effect."),
@@ -50,6 +53,51 @@ public enum CardType {
             Set<Unit> hit = new HashSet<>();
             return List.of(new DamageEffect(this, 4, hit), new DamageEffect(this, 4, hit));
         }
+    },
+    GRAVEL(Kind.SPELL, "Gravel", 0, "Gr", "Destroy the lowest power monster.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return List.of(DestroyExtremeEffect.lowest(this));
+        }
+    },
+    LIGHTNING(Kind.SPELL, "Lightning", 0, "Li", "Destroy the highest power monster.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return List.of(DestroyExtremeEffect.highest(this));
+        }
+    },
+    SKELETON(Kind.MONSTER, "Skeleton", 4, "Sk", "On play: deal 3 damage to a monster.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return List.of(new DamageEffect(this, 3));
+        }
+    },
+    EVIL_GOBLIN(Kind.MONSTER, "Evil Goblin", 8, "EG", "No effect."),
+    BOAR(Kind.MONSTER, "Boar", 4, "Bo", "On play: deal 1 damage to a monster.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return List.of(new DamageEffect(this, 1));
+        }
+    },
+    BEAR(Kind.MONSTER, "Bear", 7, "Be", "No effect."),
+    BASIC_ZOMBIE(Kind.MONSTER, "Basic Zombie", 2, "BZ", "No effect."),
+    LEADER_ZOMBIE(Kind.MONSTER, "Leader Zombie", 6, "LZ", "When hurt: summon a Basic Zombie on a random empty tile.") {
+        @Override
+        public List<Effect> onHurt(Unit self, int amount) {
+            return List.of(SummonEffect.random(this, BASIC_ZOMBIE));
+        }
+    },
+    HORDE(Kind.SPELL, "Horde", 0, "Ho", "Play all Basic Zombies from your deck.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return List.of(new PlayFromPileEffect(this, BASIC_ZOMBIE, Pile.DECK));
+        }
+    },
+    ZOMBIE_AWAKENING(Kind.SPELL, "Zombie Awakening", 0, "ZA", "Play all Basic Zombies from your graveyard.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return List.of(new PlayFromPileEffect(this, BASIC_ZOMBIE, Pile.GRAVEYARD));
+        }
     };
 
     public enum Kind {
@@ -78,6 +126,15 @@ public enum CardType {
      * or a spell being cast (self = null).
      */
     public List<Effect> onPlay(@Nullable Unit self) {
+        return List.of();
+    }
+
+    /**
+     * Effects when this monster takes damage, also when the damage destroys it. They are queued before the
+     * on-death effects. {@code self.power()} is the power after the damage; below 1 means it does not survive
+     * (by the time the effects resolve, it is off the board).
+     */
+    public List<Effect> onHurt(Unit self, int amount) {
         return List.of();
     }
 
@@ -111,10 +168,6 @@ public enum CardType {
     /** Rules text shown in the tooltip. */
     public String description() {
         return description;
-    }
-
-    public String bigGlyphId() {
-        return "qwent:card_" + name().toLowerCase() + "_big";
     }
 
     public String textArtGlyphId() {

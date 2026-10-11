@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -62,12 +63,59 @@ public final class GameDialog {
         this.glyphs = glyphs;
     }
 
-    public void show(Player player, GameState state) {
-        player.showDialog(build(state));
+    /** Shows the game, or the given pile's screen. */
+    public void show(Player player, GameState state, @Nullable Pile viewing) {
+        player.showDialog(build(state, viewing));
     }
 
-    private Dialog build(GameState state) {
+    private Dialog build(GameState state, @Nullable Pile viewing) {
+        if (viewing != null) {
+            return pile(state, viewing);
+        }
         return state.phase() == GameState.Phase.MULLIGAN ? mulligan(state) : game(state);
+    }
+
+    /** All cards of a pile in rows of {@link GameState#MAX_HAND}, with hover tooltips, and a "back" text. */
+    private Dialog pile(GameState state, Pile pile) {
+        List<CardType> cards = new ArrayList<>(pile == Pile.DECK ? state.deck() : state.graveyard());
+        if (pile == Pile.DECK) {
+            // Sorted, so looking at the deck does not reveal the draw order.
+            cards.sort(Comparator.naturalOrder());
+        }
+        String name = pile == Pile.DECK ? "Deck" : "Graveyard";
+        TextComponent.Builder rows = Component.text();
+        boolean firstLine = true;
+        for (int start = 0; start < cards.size(); start += GameState.MAX_HAND) {
+            List<CardType> rowCards = cards.subList(start, Math.min(start + GameState.MAX_HAND, cards.size()));
+            Cell[] cells = new Cell[rowCards.size()];
+            for (int i = 0; i < cells.length; i++) {
+                CardType card = rowCards.get(i);
+                Integer power = card.isMonster() ? card.power() : null;
+                cells[i] = cell(art(card.textArtGlyphId(), false), card.shortName(), power, NamedTextColor.WHITE,
+                        null, tooltip(card, null));
+            }
+            for (Component line : rowLines(cells)) {
+                if (!firstLine) {
+                    rows.append(Component.newline());
+                }
+                rows.append(line);
+                firstLine = false;
+            }
+        }
+        Component back = Component.text("[ Back ]", NamedTextColor.GOLD)
+                .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "back")))
+                .hoverEvent(HoverEvent.showText(Component.text("Back to the game")));
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(Component.text(name + ": " + cards.size()
+                + (cards.size() == 1 ? " card" : " cards"), NamedTextColor.YELLOW)));
+        if (pile == Pile.DECK) {
+            body.add(DialogBody.plainMessage(Component.text("Shown sorted, not in draw order.", NamedTextColor.GRAY)));
+        }
+        if (!cards.isEmpty()) {
+            body.add(DialogBody.plainMessage(rows.build().shadowColor(ShadowColor.none()), BODY_WIDTH));
+        }
+        body.add(DialogBody.plainMessage(back));
+        return dialog("Qwent - " + name, body);
     }
 
     /** Mulligan screen: only the hand (the board is not shown yet) and a "keep hand" text. */
@@ -102,9 +150,10 @@ public final class GameDialog {
                 board.append(Component.newline());
             }
             boolean label = line == LABEL_LINE;
-            board.append(label ? sideLabel("Graveyard: " + state.graveyard().size(), true) : Glyphs.space(SIDE_W))
+            board.append(label ? sideLabel("Graveyard: " + state.graveyard().size(), "view/graveyard", true)
+                            : Glyphs.space(SIDE_W))
                     .append(boardLines.get(line))
-                    .append(label ? sideLabel("Deck: " + state.deckSize(), false) : Glyphs.space(SIDE_W));
+                    .append(label ? sideLabel("Deck: " + state.deckSize(), "view/deck", false) : Glyphs.space(SIDE_W));
         }
 
         return dialog("Qwent", List.of(
@@ -197,7 +246,7 @@ public final class GameDialog {
 
     /** Art from a glyph (or a short text when the resource pack is missing) and an optional power number. */
     private static Cell cell(@Nullable Component glyph, String fallback, @Nullable Integer power, TextColor powerColor,
-                             String action, Component tooltip) {
+                             @Nullable String action, Component tooltip) {
         Component powerText = null;
         int powerWidth = 0;
         if (power != null) {
@@ -224,13 +273,9 @@ public final class GameDialog {
                 : Component.text().append(art).append(Glyphs.space(-GLYPH_ADVANCE)).append(frame).build();
     }
 
-    /** Hover text: big card art (if available), name, power and rules text. */
-    private Component tooltip(CardType card, @Nullable Unit unit) {
+    /** Hover text: name, power and rules text. */
+    private static Component tooltip(CardType card, @Nullable Unit unit) {
         TextComponent.Builder text = Component.text();
-        Component big = glyphs.resolve(card.bigGlyphId());
-        if (big != null) {
-            text.append(big).append(Component.newline());
-        }
         text.append(Component.text(card.displayName(), NamedTextColor.GOLD)).append(Component.newline());
         if (!card.isMonster()) {
             text.append(Component.text("Spell", NamedTextColor.AQUA));
@@ -260,10 +305,12 @@ public final class GameDialog {
         return lines;
     }
 
-    /** A label exactly {@link #SIDE_W} wide, aligned towards the board. */
-    private static Component sideLabel(String text, boolean leftOfBoard) {
+    /** A clickable label exactly {@link #SIDE_W} wide, aligned towards the board. */
+    private static Component sideLabel(String text, String action, boolean leftOfBoard) {
         int width = textWidth(text);
-        Component label = Component.text(text, NamedTextColor.GRAY).shadowColor(ShadowColor.shadowColor(0xFF2A2A2A));
+        Component label = Component.text(text, NamedTextColor.GRAY).shadowColor(ShadowColor.shadowColor(0xFF2A2A2A))
+                .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, action)))
+                .hoverEvent(HoverEvent.showText(Component.text("Click to view")));
         Component outer = Glyphs.space(SIDE_W - SIDE_MARGIN - width);
         Component inner = Glyphs.space(SIDE_MARGIN);
         return leftOfBoard
@@ -300,10 +347,9 @@ public final class GameDialog {
         } else {
             content = Glyphs.space(CARD_W);
         }
-        if (cell.action() == null) {
-            return content;
+        if (cell.action() != null) {
+            content = content.clickEvent(ClickEvent.custom(Key.key(NAMESPACE, cell.action())));
         }
-        Component styled = content.clickEvent(ClickEvent.custom(Key.key(NAMESPACE, cell.action())));
-        return cell.tooltip() == null ? styled : styled.hoverEvent(HoverEvent.showText(cell.tooltip()));
+        return cell.tooltip() == null ? content : content.hoverEvent(HoverEvent.showText(cell.tooltip()));
     }
 }

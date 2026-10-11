@@ -16,6 +16,8 @@ import java.util.UUID;
 /** Keeps the running game of each player. */
 public final class GameManager implements Listener {
     private final Map<UUID, GameState> games = new HashMap<>();
+    /** The pile screen a player has open, if any (UI state, kept per player). */
+    private final Map<UUID, Pile> viewing = new HashMap<>();
     private final DeckStore decks;
 
     public GameManager(DeckStore decks) {
@@ -30,6 +32,7 @@ public final class GameManager implements Listener {
         state.draw(GameState.STARTING_HAND);
         state.beginMulligan(GameState.MULLIGAN_REDRAWS);
         games.put(player.getUniqueId(), state);
+        viewing.remove(player.getUniqueId());
         return state;
     }
 
@@ -37,8 +40,22 @@ public final class GameManager implements Listener {
         return games.get(player.getUniqueId());
     }
 
+    public @Nullable Pile viewing(Player player) {
+        return viewing.get(player.getUniqueId());
+    }
+
+    /** Opens a pile screen, or back to the game with null. */
+    public void setViewing(Player player, @Nullable Pile pile) {
+        if (pile == null) {
+            viewing.remove(player.getUniqueId());
+        } else {
+            viewing.put(player.getUniqueId(), pile);
+        }
+    }
+
     public void end(Player player) {
         games.remove(player.getUniqueId());
+        viewing.remove(player.getUniqueId());
     }
 
     @EventHandler
