@@ -50,4 +50,9 @@ public enum CardType {
     public String artGlyphId(int part) {
         return "qwent:card_" + name().toLowerCase() + "_p" + part;
     }
+
+    /** Card art for the clickable-text view: one glyph, top on the text line's top. */
+    public String textArtGlyphId() {
+        return "qwent:card_" + name().toLowerCase() + "_text";
+    }
 }

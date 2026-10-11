@@ -48,6 +48,13 @@ public final class CardArt {
     }
 
     /** Drops the shadow and trims the glyph's extra 1 px advance, so the label is exactly the art width. */
+    /** Hover text: big card art (if available), name and power. */
+    public Component tooltip(CardType card) {
+        Component info = Component.text(card.displayName() + "\nPower: " + card.power());
+        Component big = glyphs.resolve(card.bigGlyphId());
+        return big == null ? info : Component.text().append(big).append(Component.newline()).append(info).build();
+    }
+
     private static Component finish(Component glyph) {
         return Component.text().append(glyph).append(Glyphs.space(-1)).build().shadowColor(ShadowColor.none());
     }

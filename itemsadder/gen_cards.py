@@ -28,6 +28,11 @@ CLIENT_JAR = os.path.expanduser("~/.var/app/org.prismlauncher.PrismLauncher/data
 EDGE = 10
 BUTTON_SPRITES = ["button", "button_disabled", "button_highlighted"]
 
+# Clickable-text view (TextGameDialog): one glyph per picture, 60 px tall (40 x 60 for 2:3 art), drawn from
+# the top of a text line (a glyph's top is at line top + 7 - y_position) and hanging down over the next lines.
+TEXT_CARD_H = 60
+TEXT_ASCENT = 7
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONTENT = os.path.join(HERE, "contents", "qwent")
 # Raw resource pack files (vanilla overrides, space font). Must be a separate content folder:
@@ -40,6 +45,11 @@ def glyph(name, texture, part):
     # Each part moves the card up by one button, so that button shows the next slice.
     return [f"  {name}:", f"    path: font/cards/{texture}.png",
             f"    scale_ratio: {CARD_H}", f"    y_position: {ASCENT + part * PART_PITCH}"]
+
+
+def text_glyph(name, texture):
+    return [f"  {name}:", f"    path: font/cards/{texture}.png",
+            f"    scale_ratio: {TEXT_CARD_H}", f"    y_position: {TEXT_ASCENT}"]
 
 
 def write_png(path, pixels, w, h):
@@ -160,6 +170,10 @@ def main():
             lines += glyph(f"card_{card}_p{part}", f"{card}_big", part)
     placeholder(os.path.join(TEXTURES, "tile_empty.png"), (0, 0, 0, 90), (200, 200, 200, 200), 1)
     placeholder(os.path.join(TEXTURES, "select_frame.png"), (0, 0, 0, 0), (255, 215, 0, 255), 2)
+    for card in CARDS:
+        lines += text_glyph(f"card_{card}_text", f"{card}_big")
+    lines += text_glyph("tile_empty_text", "tile_empty")
+    lines += text_glyph("select_frame_text", "select_frame")
     for part in range(STACK):
         lines += glyph(f"tile_empty_p{part}", "tile_empty", part)
         lines += glyph(f"select_frame_p{part}", "select_frame", part)

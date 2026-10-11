@@ -102,6 +102,34 @@ font_images:
     path: font/cards/dragon_big.png
     scale_ratio: 64
     y_position: 57
+  card_peasant_text:
+    path: font/cards/peasant_big.png
+    scale_ratio: 60
+    y_position: 7
+  card_archer_text:
+    path: font/cards/archer_big.png
+    scale_ratio: 60
+    y_position: 7
+  card_knight_text:
+    path: font/cards/knight_big.png
+    scale_ratio: 60
+    y_position: 7
+  card_mage_text:
+    path: font/cards/mage_big.png
+    scale_ratio: 60
+    y_position: 7
+  card_dragon_text:
+    path: font/cards/dragon_big.png
+    scale_ratio: 60
+    y_position: 7
+  tile_empty_text:
+    path: font/cards/tile_empty.png
+    scale_ratio: 60
+    y_position: 7
+  select_frame_text:
+    path: font/cards/select_frame.png
+    scale_ratio: 60
+    y_position: 7
   tile_empty_p0:
     path: font/cards/tile_empty.png
     scale_ratio: 64

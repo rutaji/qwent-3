@@ -27,7 +27,7 @@ import java.util.List;
  * With ItemsAdder glyphs available, each card is a stack of {@link CardArt#STACK} buttons whose labels
  * together show the big card art. Otherwise every card is one button with a text label.
  */
-public final class GameDialog {
+public final class GameDialog implements GameView {
     public static final String NAMESPACE = "qwent";
     private static final int GRID_COLUMNS = GameState.HAND_SIZE;
     private static final int BOARD_OFFSET = (GRID_COLUMNS - GameState.COLUMNS) / 2;
@@ -44,6 +44,7 @@ public final class GameDialog {
         this.art = new CardArt(glyphs);
     }
 
+    @Override
     public void show(Player player, GameState state) {
         player.showDialog(build(state));
     }
@@ -101,7 +102,7 @@ public final class GameDialog {
             return cardButton(label, Component.text("Empty tile"), "tile/" + tile, null, part);
         }
         Component label = part >= 0 ? art.card(card, part, false) : cardLabel(card);
-        return cardButton(label, tooltip(card), "tile/" + tile, card, part);
+        return cardButton(label, art.tooltip(card), "tile/" + tile, card, part);
     }
 
     private ActionButton handButton(GameState state, int index, int part) {
@@ -112,7 +113,7 @@ public final class GameDialog {
         }
         boolean selected = index == state.selectedHandIndex();
         Component label = part >= 0 ? art.card(card, part, selected) : textLabel(card, selected);
-        return cardButton(label, tooltip(card), "hand/" + index, card, part);
+        return cardButton(label, art.tooltip(card), "hand/" + index, card, part);
     }
 
     private ActionButton cardButton(@Nullable Component label, @Nullable Component tooltip, String action,
@@ -156,13 +157,6 @@ public final class GameDialog {
             icon = Component.text(card.shortName(), NamedTextColor.AQUA);
         }
         return Component.text().append(icon).append(Component.text(" " + card.power(), NamedTextColor.WHITE)).build();
-    }
-
-    /** Big card art (if available), name and power. */
-    private Component tooltip(CardType card) {
-        Component info = Component.text(card.displayName() + "\nPower: " + card.power());
-        Component art = glyphs.resolve(card.bigGlyphId());
-        return art == null ? info : Component.text().append(art).append(Component.newline()).append(info).build();
     }
 
     private static DialogAction click(String path) {
