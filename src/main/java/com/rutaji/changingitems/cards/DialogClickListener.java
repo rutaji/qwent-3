@@ -7,14 +7,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-/** Handles clicks on the game dialog ("qwent:tile/N", "qwent:hand/N", "qwent:noop", "qwent:close"). */
+/** Handles clicks on the game dialog ("qwent:tile/N", "qwent:hand/N", "qwent:close"). */
 public final class DialogClickListener implements Listener {
     private final Plugin plugin;
     private final GameManager games;
+    private final GameDialog dialog;
 
-    public DialogClickListener(Plugin plugin, GameManager games) {
+    public DialogClickListener(Plugin plugin, GameManager games, GameDialog dialog) {
         this.plugin = plugin;
         this.games = games;
+        this.dialog = dialog;
     }
 
     @EventHandler
@@ -36,14 +38,13 @@ public final class DialogClickListener implements Listener {
             return;
         }
         GameState state = games.get(player);
-        GameView view = games.view(player);
-        if (state == null || view == null) {
+        if (state == null) {
             games.end(player);
             player.closeDialog();
             return;
         }
         if (path.equals("close")) {
-            // Sent on Esc; the game is kept, /qwent starts a new one.
+            // Sent on Esc; the game is kept and /qwent resumes it.
             player.closeDialog();
             return;
         }
@@ -58,10 +59,10 @@ public final class DialogClickListener implements Listener {
             }
             switch (kind) {
                 case "hand" -> state.selectHand(index);
-                case "tile" -> state.placeOn(index);
+                case "tile" -> state.clickTile(index);
                 default -> { }
             }
         }
-        view.show(player, state);
+        dialog.show(player, state);
     }
 }

@@ -3,8 +3,8 @@ package com.rutaji.changingitems;
 import com.rutaji.changingitems.cards.DialogClickListener;
 import com.rutaji.changingitems.cards.GameDialog;
 import com.rutaji.changingitems.cards.GameManager;
+import com.rutaji.changingitems.cards.GameState;
 import com.rutaji.changingitems.cards.Glyphs;
-import com.rutaji.changingitems.cards.TextGameDialog;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.entity.Player;
@@ -16,26 +16,26 @@ public final class ChangingItems extends JavaPlugin {
     public void onEnable() {
         GameManager games = new GameManager();
         Glyphs glyphs = new Glyphs(getLogger());
-        GameDialog buttonView = new GameDialog(glyphs);
-        TextGameDialog textView = new TextGameDialog(glyphs);
+        GameDialog dialog = new GameDialog(glyphs);
 
         getServer().getPluginManager().registerEvents(games, this);
-        getServer().getPluginManager().registerEvents(new DialogClickListener(this, games), this);
+        getServer().getPluginManager().registerEvents(new DialogClickListener(this, games, dialog), this);
 
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event ->
                 event.registrar().register(
                         Commands.literal("qwent")
                                 .requires(source -> source.getExecutor() instanceof Player)
+                                // Resumes the running game (e.g. after Esc), or starts one.
                                 .executes(ctx -> {
                                     Player player = (Player) ctx.getSource().getExecutor();
-                                    textView.show(player, games.start(player, textView));
+                                    GameState state = games.get(player);
+                                    dialog.show(player, state != null ? state : games.start(player));
                                     return 1;
                                 })
-                                // The earlier button-grid version, for comparison.
-                                .then(Commands.literal("buttons")
+                                .then(Commands.literal("new")
                                         .executes(ctx -> {
                                             Player player = (Player) ctx.getSource().getExecutor();
-                                            buttonView.show(player, games.start(player, buttonView));
+                                            dialog.show(player, games.start(player));
                                             return 1;
                                         }))
                                 .build(),

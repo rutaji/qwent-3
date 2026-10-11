@@ -14,9 +14,8 @@ import java.util.concurrent.ThreadLocalRandom;
 /** Keeps the running game of each player. */
 public final class GameManager implements Listener {
     private final Map<UUID, GameState> games = new HashMap<>();
-    private final Map<UUID, GameView> views = new HashMap<>();
 
-    public GameState start(Player player, GameView view) {
+    public GameState start(Player player) {
         CardType[] types = CardType.values();
         CardType[] hand = new CardType[GameState.HAND_SIZE];
         for (int i = 0; i < hand.length; i++) {
@@ -24,7 +23,6 @@ public final class GameManager implements Listener {
         }
         GameState state = new GameState(hand);
         games.put(player.getUniqueId(), state);
-        views.put(player.getUniqueId(), view);
         return state;
     }
 
@@ -32,14 +30,8 @@ public final class GameManager implements Listener {
         return games.get(player.getUniqueId());
     }
 
-    /** The view the player's game was started with. */
-    public @Nullable GameView view(Player player) {
-        return views.get(player.getUniqueId());
-    }
-
     public void end(Player player) {
         games.remove(player.getUniqueId());
-        views.remove(player.getUniqueId());
     }
 
     @EventHandler

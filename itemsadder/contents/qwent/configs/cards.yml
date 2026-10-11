@@ -2,124 +2,60 @@
 info:
   namespace: qwent
 font_images:
-  card_peasant:
-    path: font/cards/peasant.png
-    scale_ratio: 14
-    y_position: 11
   card_peasant_big:
     path: font/cards/peasant_big.png
     scale_ratio: 96
     y_position: 10
-  card_peasant_p0:
-    path: font/cards/peasant_big.png
-    scale_ratio: 64
-    y_position: 13
-  card_peasant_p1:
-    path: font/cards/peasant_big.png
-    scale_ratio: 64
-    y_position: 35
-  card_peasant_p2:
-    path: font/cards/peasant_big.png
-    scale_ratio: 64
-    y_position: 57
-  card_archer:
-    path: font/cards/archer.png
-    scale_ratio: 14
-    y_position: 11
-  card_archer_big:
-    path: font/cards/archer_big.png
-    scale_ratio: 96
-    y_position: 10
-  card_archer_p0:
-    path: font/cards/archer_big.png
-    scale_ratio: 64
-    y_position: 13
-  card_archer_p1:
-    path: font/cards/archer_big.png
-    scale_ratio: 64
-    y_position: 35
-  card_archer_p2:
-    path: font/cards/archer_big.png
-    scale_ratio: 64
-    y_position: 57
-  card_knight:
-    path: font/cards/knight.png
-    scale_ratio: 14
-    y_position: 11
-  card_knight_big:
-    path: font/cards/knight_big.png
-    scale_ratio: 96
-    y_position: 10
-  card_knight_p0:
-    path: font/cards/knight_big.png
-    scale_ratio: 64
-    y_position: 13
-  card_knight_p1:
-    path: font/cards/knight_big.png
-    scale_ratio: 64
-    y_position: 35
-  card_knight_p2:
-    path: font/cards/knight_big.png
-    scale_ratio: 64
-    y_position: 57
-  card_mage:
-    path: font/cards/mage.png
-    scale_ratio: 14
-    y_position: 11
-  card_mage_big:
-    path: font/cards/mage_big.png
-    scale_ratio: 96
-    y_position: 10
-  card_mage_p0:
-    path: font/cards/mage_big.png
-    scale_ratio: 64
-    y_position: 13
-  card_mage_p1:
-    path: font/cards/mage_big.png
-    scale_ratio: 64
-    y_position: 35
-  card_mage_p2:
-    path: font/cards/mage_big.png
-    scale_ratio: 64
-    y_position: 57
-  card_dragon:
-    path: font/cards/dragon.png
-    scale_ratio: 14
-    y_position: 11
-  card_dragon_big:
-    path: font/cards/dragon_big.png
-    scale_ratio: 96
-    y_position: 10
-  card_dragon_p0:
-    path: font/cards/dragon_big.png
-    scale_ratio: 64
-    y_position: 13
-  card_dragon_p1:
-    path: font/cards/dragon_big.png
-    scale_ratio: 64
-    y_position: 35
-  card_dragon_p2:
-    path: font/cards/dragon_big.png
-    scale_ratio: 64
-    y_position: 57
   card_peasant_text:
     path: font/cards/peasant_big.png
     scale_ratio: 60
     y_position: 7
+  card_archer_big:
+    path: font/cards/archer_big.png
+    scale_ratio: 96
+    y_position: 10
   card_archer_text:
     path: font/cards/archer_big.png
     scale_ratio: 60
     y_position: 7
+  card_knight_big:
+    path: font/cards/knight_big.png
+    scale_ratio: 96
+    y_position: 10
   card_knight_text:
     path: font/cards/knight_big.png
     scale_ratio: 60
     y_position: 7
+  card_mage_big:
+    path: font/cards/mage_big.png
+    scale_ratio: 96
+    y_position: 10
   card_mage_text:
     path: font/cards/mage_big.png
     scale_ratio: 60
     y_position: 7
+  card_dragon_big:
+    path: font/cards/dragon_big.png
+    scale_ratio: 96
+    y_position: 10
   card_dragon_text:
     path: font/cards/dragon_big.png
+    scale_ratio: 60
+    y_position: 7
+  card_arrow_big:
+    path: font/cards/arrow_big.png
+    scale_ratio: 96
+    y_position: 10
+  card_arrow_text:
+    path: font/cards/arrow_big.png
+    scale_ratio: 60
+    y_position: 7
+  card_two_arrows_big:
+    path: font/cards/two_arrows_big.png
+    scale_ratio: 96
+    y_position: 10
+  card_two_arrows_text:
+    path: font/cards/two_arrows_big.png
     scale_ratio: 60
     y_position: 7
   tile_empty_text:
@@ -130,27 +66,3 @@ font_images:
     path: font/cards/select_frame.png
     scale_ratio: 60
     y_position: 7
-  tile_empty_p0:
-    path: font/cards/tile_empty.png
-    scale_ratio: 64
-    y_position: 13
-  select_frame_p0:
-    path: font/cards/select_frame.png
-    scale_ratio: 64
-    y_position: 13
-  tile_empty_p1:
-    path: font/cards/tile_empty.png
-    scale_ratio: 64
-    y_position: 35
-  select_frame_p1:
-    path: font/cards/select_frame.png
-    scale_ratio: 64
-    y_position: 35
-  tile_empty_p2:
-    path: font/cards/tile_empty.png
-    scale_ratio: 64
-    y_position: 57
-  select_frame_p2:
-    path: font/cards/select_frame.png
-    scale_ratio: 64
-    y_position: 57
