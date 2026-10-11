@@ -7,7 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-/** Handles clicks on the game dialog ("qwent:tile/N", "qwent:hand/N", "qwent:close"). */
+/** Handles clicks on the game dialog ("qwent:tile/N", "qwent:hand/N", "qwent:keep", "qwent:close"). */
 public final class DialogClickListener implements Listener {
     private final Plugin plugin;
     private final GameManager games;
@@ -48,6 +48,9 @@ public final class DialogClickListener implements Listener {
             player.closeDialog();
             return;
         }
+        if (path.equals("keep")) {
+            state.endMulligan();
+        }
         int slash = path.indexOf('/');
         if (slash > 0) {
             String kind = path.substring(0, slash);
@@ -58,7 +61,7 @@ public final class DialogClickListener implements Listener {
                 index = -1;
             }
             switch (kind) {
-                case "hand" -> state.selectHand(index);
+                case "hand" -> state.clickHand(index);
                 case "tile" -> state.clickTile(index);
                 default -> { }
             }

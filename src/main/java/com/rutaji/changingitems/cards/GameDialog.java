@@ -18,11 +18,13 @@ import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Game screen made of clickable body text: board (2 x 5) and hand (9) as two text blocks.
- * Clicks send "qwent:tile/N", "qwent:hand/N"; Esc sends "qwent:close".
+ * Game screen made of clickable body text: board (2 x 5, with graveyard / deck counts on its sides) and hand
+ * (up to 10) as two text blocks. During the mulligan only the hand is shown.
+ * Clicks send "qwent:tile/N", "qwent:hand/N", "qwent:keep"; Esc sends "qwent:close".
  *
  * Every card is {@link #LINES} text lines tall (9 px each, no gaps). The first line draws the card glyph
  * (it hangs down over the following lines), {@link #POWER_LINE} shows the power; every line of the card carries
@@ -44,6 +46,14 @@ public final class GameDialog {
     private static final int CHAR_W = 6;
     /** Empty lines between the board and the hand. */
     private static final int HAND_GAP_LINES = 2;
+    /**
+     * Width of the label areas left and right of the board. Both sides are equally wide,
+     * so the (centred) board stays in the middle.
+     */
+    private static final int SIDE_W = 90;
+    private static final int SIDE_MARGIN = 8;
+    /** Board line with the graveyard / deck labels: the bottom line of the first row, between the two rows. */
+    private static final int LABEL_LINE = LINES - 1;
     private static final int BODY_WIDTH = 1024;
 
     private final Glyphs glyphs;
@@ -57,41 +67,80 @@ public final class GameDialog {
     }
 
     private Dialog build(GameState state) {
+        return state.phase() == GameState.Phase.MULLIGAN ? mulligan(state) : game(state);
+    }
+
+    /** Mulligan screen: only the hand (the board is not shown yet) and a "keep hand" text. */
+    private Dialog mulligan(GameState state) {
+        Component keep = Component.text("[ Keep hand ]", NamedTextColor.GOLD)
+                .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "keep")))
+                .hoverEvent(HoverEvent.showText(Component.text("Start the game with this hand")));
+        return dialog("Qwent - Mulligan", List.of(
+                DialogBody.plainMessage(Component.text("Click a card to redraw it (" + state.redrawsLeft()
+                        + (state.redrawsLeft() == 1 ? " redraw" : " redraws") + " left).", NamedTextColor.YELLOW)),
+                DialogBody.plainMessage(Component.text(
+                        "A redrawn card won't come back during the mulligan.", NamedTextColor.GRAY)),
+                DialogBody.plainMessage(handBlock(state, 0), BODY_WIDTH),
+                DialogBody.plainMessage(keep)
+        ));
+    }
+
+    private Dialog game(GameState state) {
         Effect pending = state.pendingEffect();
 
-        TextComponent.Builder board = Component.text();
+        List<Component> boardLines = new ArrayList<>();
         for (int row = 0; row < GameState.ROWS; row++) {
-            if (row > 0) {
-                board.append(Component.newline());
-            }
             Cell[] cells = new Cell[GameState.COLUMNS];
             for (int col = 0; col < GameState.COLUMNS; col++) {
                 cells[col] = tileCell(state, row * GameState.COLUMNS + col, pending);
             }
-            board.append(rowLines(cells));
+            boardLines.addAll(rowLines(cells));
+        }
+        TextComponent.Builder board = Component.text();
+        for (int line = 0; line < boardLines.size(); line++) {
+            if (line > 0) {
+                board.append(Component.newline());
+            }
+            boolean label = line == LABEL_LINE;
+            board.append(label ? sideLabel("Graveyard: " + state.graveyard().size(), true) : Glyphs.space(SIDE_W))
+                    .append(boardLines.get(line))
+                    .append(label ? sideLabel("Deck: " + state.deckSize(), false) : Glyphs.space(SIDE_W));
         }
 
+        return dialog("Qwent", List.of(
+                DialogBody.plainMessage(Component.text("Total power: " + state.totalPower(), NamedTextColor.GOLD)),
+                DialogBody.plainMessage(statusLine(state, pending)),
+                DialogBody.plainMessage(board.build().shadowColor(ShadowColor.none()), BODY_WIDTH),
+                DialogBody.plainMessage(handBlock(state, HAND_GAP_LINES), BODY_WIDTH)
+        ));
+    }
+
+    /** The hand as one text block, after {@code gapLines} empty lines. */
+    private Component handBlock(GameState state, int gapLines) {
         TextComponent.Builder hand = Component.text();
-        for (int i = 0; i < HAND_GAP_LINES; i++) {
+        for (int i = 0; i < gapLines; i++) {
             hand.append(Component.text(" ")).append(Component.newline());
         }
-        Cell[] handCells = new Cell[GameState.HAND_SIZE];
-        for (int i = 0; i < GameState.HAND_SIZE; i++) {
+        Cell[] handCells = new Cell[state.handSize()];
+        for (int i = 0; i < handCells.length; i++) {
             handCells[i] = handCell(state, i);
         }
-        hand.append(rowLines(handCells));
+        List<Component> handLines = rowLines(handCells);
+        for (int line = 0; line < handLines.size(); line++) {
+            if (line > 0) {
+                hand.append(Component.newline());
+            }
+            hand.append(handLines.get(line));
+        }
+        return hand.build().shadowColor(ShadowColor.none());
+    }
 
-        DialogBase base = DialogBase.builder(Component.text("Qwent"))
+    private static Dialog dialog(String title, List<DialogBody> body) {
+        DialogBase base = DialogBase.builder(Component.text(title))
                 .canCloseWithEscape(true)
                 .afterAction(DialogBase.DialogAfterAction.WAIT_FOR_RESPONSE)
-                .body(List.of(
-                        DialogBody.plainMessage(Component.text("Total power: " + state.totalPower(), NamedTextColor.GOLD)),
-                        DialogBody.plainMessage(statusLine(state, pending)),
-                        DialogBody.plainMessage(board.build().shadowColor(ShadowColor.none()), BODY_WIDTH),
-                        DialogBody.plainMessage(hand.build().shadowColor(ShadowColor.none()), BODY_WIDTH)
-                ))
+                .body(body)
                 .build();
-
         // Every dialog type needs at least one button: a 2 px one is invisible with the button override.
         // Esc runs this button's action, so it must close instead of redrawing the dialog.
         ActionButton hidden = ActionButton.builder(Component.empty())
@@ -122,7 +171,6 @@ public final class GameDialog {
      */
     private record Cell(@Nullable Component art, int artWidth, @Nullable Component power, int powerWidth,
                         @Nullable String action, @Nullable Component tooltip) {
-        static final Cell EMPTY = new Cell(null, 0, null, 0, null, null);
     }
 
     private Cell tileCell(GameState state, int tile, @Nullable Effect pending) {
@@ -141,9 +189,6 @@ public final class GameDialog {
 
     private Cell handCell(GameState state, int index) {
         CardType card = state.handCard(index);
-        if (card == null) {
-            return Cell.EMPTY;
-        }
         boolean selected = index == state.selectedHandIndex();
         Integer power = card.isMonster() ? card.power() : null;
         return cell(art(card.textArtGlyphId(), selected), (selected ? ">" : "") + card.shortName(), power,
@@ -200,20 +245,45 @@ public final class GameDialog {
     }
 
     /** The {@link #LINES} text lines of one card row; every line is exactly as wide as the row. */
-    private static Component rowLines(Cell[] cells) {
-        TextComponent.Builder lines = Component.text();
+    private static List<Component> rowLines(Cell[] cells) {
+        List<Component> lines = new ArrayList<>();
         for (int line = 0; line < LINES; line++) {
-            if (line > 0) {
-                lines.append(Component.newline());
-            }
+            TextComponent.Builder text = Component.text();
             for (int col = 0; col < cells.length; col++) {
                 if (col > 0) {
-                    lines.append(Glyphs.space(GAP));
+                    text.append(Glyphs.space(GAP));
                 }
-                lines.append(cellLine(cells[col], line));
+                text.append(cellLine(cells[col], line));
             }
+            lines.add(text.build());
         }
-        return lines.build();
+        return lines;
+    }
+
+    /** A label exactly {@link #SIDE_W} wide, aligned towards the board. */
+    private static Component sideLabel(String text, boolean leftOfBoard) {
+        int width = textWidth(text);
+        Component label = Component.text(text, NamedTextColor.GRAY).shadowColor(ShadowColor.shadowColor(0xFF2A2A2A));
+        Component outer = Glyphs.space(SIDE_W - SIDE_MARGIN - width);
+        Component inner = Glyphs.space(SIDE_MARGIN);
+        return leftOfBoard
+                ? Component.text().append(outer).append(label).append(inner).build()
+                : Component.text().append(inner).append(label).append(outer).build();
+    }
+
+    /** Width in the default font (glyph width + 1 px spacing); exact for the characters used in labels. */
+    private static int textWidth(String text) {
+        int width = 0;
+        for (char c : text.toCharArray()) {
+            width += switch (c) {
+                case 'i', ':', '.', ',', '!', '\'', '|' -> 2;
+                case 'l' -> 3;
+                case 'I', 't', ' ' -> 4;
+                case 'f', 'k', '<', '>' -> 5;
+                default -> CHAR_W;
+            };
+        }
+        return width;
     }
 
     /** One line of a card cell, exactly CARD_W wide, clickable over its whole width. */

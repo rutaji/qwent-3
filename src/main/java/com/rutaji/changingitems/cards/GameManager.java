@@ -6,22 +6,29 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 /** Keeps the running game of each player. */
 public final class GameManager implements Listener {
     private final Map<UUID, GameState> games = new HashMap<>();
+    private final DeckStore decks;
 
+    public GameManager(DeckStore decks) {
+        this.decks = decks;
+    }
+
+    /** Starts a game with a shuffled copy of the player's starting deck, draws the starting hand, starts the mulligan. */
     public GameState start(Player player) {
-        CardType[] types = CardType.values();
-        CardType[] hand = new CardType[GameState.HAND_SIZE];
-        for (int i = 0; i < hand.length; i++) {
-            hand[i] = types[ThreadLocalRandom.current().nextInt(types.length)];
-        }
-        GameState state = new GameState(hand);
+        List<CardType> deck = new ArrayList<>(decks.deck(player));
+        Collections.shuffle(deck);
+        GameState state = new GameState(deck);
+        state.draw(GameState.STARTING_HAND);
+        state.beginMulligan(GameState.MULLIGAN_REDRAWS);
         games.put(player.getUniqueId(), state);
         return state;
     }

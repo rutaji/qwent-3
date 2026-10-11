@@ -1,5 +1,6 @@
 package com.rutaji.changingitems;
 
+import com.rutaji.changingitems.cards.DeckStore;
 import com.rutaji.changingitems.cards.DialogClickListener;
 import com.rutaji.changingitems.cards.GameDialog;
 import com.rutaji.changingitems.cards.GameManager;
@@ -14,7 +15,7 @@ public final class ChangingItems extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        GameManager games = new GameManager();
+        GameManager games = new GameManager(new DeckStore());
         Glyphs glyphs = new Glyphs(getLogger());
         GameDialog dialog = new GameDialog(glyphs);
 
