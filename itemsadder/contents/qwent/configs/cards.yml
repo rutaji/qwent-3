@@ -78,3 +78,123 @@ font_images:
     path: font/cards/select_frame.png
     scale_ratio: 60
     y_position: 7
+items:
+  card_peasant:
+    display_name: Peasant
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/peasant
+  card_archer:
+    display_name: Archer
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/archer
+  card_knight:
+    display_name: Knight
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/knight
+  card_mage:
+    display_name: Mage
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/mage
+  card_dragon:
+    display_name: Dragon
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/dragon
+  card_arrow:
+    display_name: Arrow
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/arrow
+  card_two_arrows:
+    display_name: Two Arrows
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/two_arrows
+  card_gravel:
+    display_name: Gravel
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/gravel
+  card_lightning:
+    display_name: Lightning
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/lightning
+  card_skeleton:
+    display_name: Skeleton
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/skeleton
+  card_evil_goblin:
+    display_name: Evil Goblin
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/evil_goblin
+  card_boar:
+    display_name: Boar
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/boar
+  card_bear:
+    display_name: Bear
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/bear
+  card_basic_zombie:
+    display_name: Basic Zombie
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/basic_zombie
+  card_leader_zombie:
+    display_name: Leader Zombie
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/leader_zombie
+  card_horde:
+    display_name: Horde
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/horde
+  card_zombie_awakening:
+    display_name: Zombie Awakening
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/zombie_awakening

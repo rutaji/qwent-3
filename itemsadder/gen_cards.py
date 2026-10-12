@@ -17,6 +17,7 @@ CARDS = ["peasant", "archer", "knight", "mage", "dragon", "arrow", "two_arrows",
          "skeleton", "evil_goblin", "boar", "bear", "basic_zombie", "leader_zombie", "horde", "zombie_awakening"]  # must match CardType (lower case)
 ART_W, ART_H = 64, 96      # size of placeholder <card>.png made for missing art
 FRAME_W, FRAME_H = 40, 60  # tile_empty / select_frame placeholders
+ICON_SIZE = 32             # placeholder item texture textures/item/cards/<card>.png made when missing
 
 # Vanilla button sprites are overridden with transparent left/right edges, so the dialog's required
 # footer button can be made invisible (2 px wide). This affects ALL buttons in the game.
@@ -36,6 +37,7 @@ CONTENT = os.path.join(HERE, "contents", "qwent")
 # ItemsAdder 4.1 puts every folder of a "textures/"-style content folder under assets/<namespace>/.
 RAW = os.path.join(HERE, "contents", "qwent_raw", "resourcepack")
 TEXTURES = os.path.join(CONTENT, "textures", "font", "cards")
+ITEM_TEXTURES = os.path.join(CONTENT, "textures", "item", "cards")
 
 
 def text_glyph(name, texture):
@@ -162,6 +164,16 @@ def main():
     placeholder(os.path.join(TEXTURES, "select_frame.png"), (0, 0, 0, 0), (255, 215, 0, 255), 2, FRAME_W, FRAME_H)
     lines += text_glyph("tile_empty_text", "tile_empty")
     lines += text_glyph("select_frame_text", "select_frame")
+
+    # Card items (CardItems): qwent:card_<card>, used by /qwent deck. The plugin sets name and lore itself.
+    os.makedirs(ITEM_TEXTURES, exist_ok=True)
+    lines.append("items:")
+    for card in CARDS:
+        placeholder(os.path.join(ITEM_TEXTURES, f"{card}.png"), (60, 60, 90, 255), (230, 230, 230, 255), 1,
+                    ICON_SIZE, ICON_SIZE)
+        lines += [f"  card_{card}:", f"    display_name: {card.replace('_', ' ').title()}",
+                  "    resource:", "      material: PAPER", "      generate: true",
+                  "      textures:", f"        - item/cards/{card}"]
     with open(os.path.join(CONTENT, "configs", "cards.yml"), "w") as f:
         f.write("\n".join(lines) + "\n")
 

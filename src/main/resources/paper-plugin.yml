@@ -1,8 +1,8 @@
-name: ChangingItems
+name: qwent3
 version: '${version}'
-main: com.rutaji.changingitems.ChangingItems
+main: com.rutaji.qwent3.Qwent3
 api-version: '26.2'
-description: ChangingItems plugin
+description: Qwent card game played in dialogs
 dependencies:
   server:
     ItemsAdder:
