@@ -2,26 +2,6 @@
 info:
   namespace: qwent
 font_images:
-  card_peasant_text:
-    path: font/cards/peasant.png
-    scale_ratio: 60
-    y_position: 7
-  card_archer_text:
-    path: font/cards/archer.png
-    scale_ratio: 60
-    y_position: 7
-  card_knight_text:
-    path: font/cards/knight.png
-    scale_ratio: 60
-    y_position: 7
-  card_mage_text:
-    path: font/cards/mage.png
-    scale_ratio: 60
-    y_position: 7
-  card_dragon_text:
-    path: font/cards/dragon.png
-    scale_ratio: 60
-    y_position: 7
   card_arrow_text:
     path: font/cards/arrow.png
     scale_ratio: 60
@@ -70,6 +50,170 @@ font_images:
     path: font/cards/zombie_awakening.png
     scale_ratio: 60
     y_position: 7
+  card_desert_zombie_text:
+    path: font/cards/desert_zombie.png
+    scale_ratio: 60
+    y_position: 7
+  card_zombie_librarian_text:
+    path: font/cards/zombie_librarian.png
+    scale_ratio: 60
+    y_position: 7
+  card_blaze_text:
+    path: font/cards/blaze.png
+    scale_ratio: 60
+    y_position: 7
+  card_cactus_text:
+    path: font/cards/cactus.png
+    scale_ratio: 60
+    y_position: 7
+  card_beetroot_text:
+    path: font/cards/beetroot.png
+    scale_ratio: 60
+    y_position: 7
+  card_bad_farming_text:
+    path: font/cards/bad_farming.png
+    scale_ratio: 60
+    y_position: 7
+  card_emerald_text:
+    path: font/cards/emerald.png
+    scale_ratio: 60
+    y_position: 7
+  card_creeper_text:
+    path: font/cards/creeper.png
+    scale_ratio: 60
+    y_position: 7
+  card_diamond_hoe_text:
+    path: font/cards/diamond_hoe.png
+    scale_ratio: 60
+    y_position: 7
+  card_gold_hoe_text:
+    path: font/cards/gold_hoe.png
+    scale_ratio: 60
+    y_position: 7
+  card_wooden_hoe_text:
+    path: font/cards/wooden_hoe.png
+    scale_ratio: 60
+    y_position: 7
+  card_potato_text:
+    path: font/cards/potato.png
+    scale_ratio: 60
+    y_position: 7
+  card_fertilizing_text:
+    path: font/cards/fertilizing.png
+    scale_ratio: 60
+    y_position: 7
+  card_farmer_text:
+    path: font/cards/farmer.png
+    scale_ratio: 60
+    y_position: 7
+  card_wheat_text:
+    path: font/cards/wheat.png
+    scale_ratio: 60
+    y_position: 7
+  card_thorny_rose_text:
+    path: font/cards/thorny_rose.png
+    scale_ratio: 60
+    y_position: 7
+  card_brown_mushroom_text:
+    path: font/cards/brown_mushroom.png
+    scale_ratio: 60
+    y_position: 7
+  card_weeds_text:
+    path: font/cards/weeds.png
+    scale_ratio: 60
+    y_position: 7
+  card_switcharoo_text:
+    path: font/cards/switcharoo.png
+    scale_ratio: 60
+    y_position: 7
+  card_silverfish_text:
+    path: font/cards/silverfish.png
+    scale_ratio: 60
+    y_position: 7
+  card_stone_bricks_text:
+    path: font/cards/stone_bricks.png
+    scale_ratio: 60
+    y_position: 7
+  card_infestation_text:
+    path: font/cards/infestation.png
+    scale_ratio: 60
+    y_position: 7
+  card_piston_text:
+    path: font/cards/piston.png
+    scale_ratio: 60
+    y_position: 7
+  card_slime_piston_text:
+    path: font/cards/slime_piston.png
+    scale_ratio: 60
+    y_position: 7
+  card_drunk_brawler_text:
+    path: font/cards/drunk_brawler.png
+    scale_ratio: 60
+    y_position: 7
+  card_librarian_text:
+    path: font/cards/librarian.png
+    scale_ratio: 60
+    y_position: 7
+  card_swarm_text:
+    path: font/cards/swarm.png
+    scale_ratio: 60
+    y_position: 7
+  card_splash_of_strength_text:
+    path: font/cards/splash_of_strength.png
+    scale_ratio: 60
+    y_position: 7
+  card_harsh_world_text:
+    path: font/cards/harsh_world.png
+    scale_ratio: 60
+    y_position: 7
+  card_bee_text:
+    path: font/cards/bee.png
+    scale_ratio: 60
+    y_position: 7
+  card_healer_text:
+    path: font/cards/healer.png
+    scale_ratio: 60
+    y_position: 7
+  card_shaman_text:
+    path: font/cards/shaman.png
+    scale_ratio: 60
+    y_position: 7
+  card_bard_text:
+    path: font/cards/bard.png
+    scale_ratio: 60
+    y_position: 7
+  card_warlock_text:
+    path: font/cards/warlock.png
+    scale_ratio: 60
+    y_position: 7
+  card_music_disc_text:
+    path: font/cards/music_disc.png
+    scale_ratio: 60
+    y_position: 7
+  card_enderman_text:
+    path: font/cards/enderman.png
+    scale_ratio: 60
+    y_position: 7
+  card_shulker_text:
+    path: font/cards/shulker.png
+    scale_ratio: 60
+    y_position: 7
+  card_endermite_text:
+    path: font/cards/endermite.png
+    scale_ratio: 60
+    y_position: 7
+  card_ender_dragon_text:
+    path: font/cards/ender_dragon.png
+    scale_ratio: 60
+    y_position: 7
+  card_summon_ender_dragon_text:
+    path: font/cards/summon_ender_dragon.png
+    scale_ratio: 60
+    y_position: 7
+  card_mirror_text:
+    path: font/cards/mirror.png
+    scale_ratio: 60
+    y_position: 7
   tile_empty_text:
     path: font/cards/tile_empty.png
     scale_ratio: 60
@@ -79,41 +223,6 @@ font_images:
     scale_ratio: 60
     y_position: 7
 items:
-  card_peasant:
-    display_name: Peasant
-    resource:
-      material: PAPER
-      generate: true
-      textures:
-        - item/cards/peasant
-  card_archer:
-    display_name: Archer
-    resource:
-      material: PAPER
-      generate: true
-      textures:
-        - item/cards/archer
-  card_knight:
-    display_name: Knight
-    resource:
-      material: PAPER
-      generate: true
-      textures:
-        - item/cards/knight
-  card_mage:
-    display_name: Mage
-    resource:
-      material: PAPER
-      generate: true
-      textures:
-        - item/cards/mage
-  card_dragon:
-    display_name: Dragon
-    resource:
-      material: PAPER
-      generate: true
-      textures:
-        - item/cards/dragon
   card_arrow:
     display_name: Arrow
     resource:
@@ -198,3 +307,290 @@ items:
       generate: true
       textures:
         - item/cards/zombie_awakening
+  card_desert_zombie:
+    display_name: Desert Zombie
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/desert_zombie
+  card_zombie_librarian:
+    display_name: Zombie Librarian
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/zombie_librarian
+  card_blaze:
+    display_name: Blaze
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/blaze
+  card_cactus:
+    display_name: Cactus
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/cactus
+  card_beetroot:
+    display_name: Beetroot
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/beetroot
+  card_bad_farming:
+    display_name: Bad Farming
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/bad_farming
+  card_emerald:
+    display_name: Emerald
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/emerald
+  card_creeper:
+    display_name: Creeper
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/creeper
+  card_diamond_hoe:
+    display_name: Diamond Hoe
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/diamond_hoe
+  card_gold_hoe:
+    display_name: Gold Hoe
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/gold_hoe
+  card_wooden_hoe:
+    display_name: Wooden Hoe
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/wooden_hoe
+  card_potato:
+    display_name: Potato
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/potato
+  card_fertilizing:
+    display_name: Fertilizing
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/fertilizing
+  card_farmer:
+    display_name: Farmer
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/farmer
+  card_wheat:
+    display_name: Wheat
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/wheat
+  card_thorny_rose:
+    display_name: Thorny Rose
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/thorny_rose
+  card_brown_mushroom:
+    display_name: Brown Mushroom
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/brown_mushroom
+  card_weeds:
+    display_name: Weeds
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/weeds
+  card_switcharoo:
+    display_name: Switcharoo
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/switcharoo
+  card_silverfish:
+    display_name: Silverfish
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/silverfish
+  card_stone_bricks:
+    display_name: Stone Bricks
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/stone_bricks
+  card_infestation:
+    display_name: Infestation
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/infestation
+  card_piston:
+    display_name: Piston
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/piston
+  card_slime_piston:
+    display_name: Slime Piston
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/slime_piston
+  card_drunk_brawler:
+    display_name: Drunk Brawler
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/drunk_brawler
+  card_librarian:
+    display_name: Librarian
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/librarian
+  card_swarm:
+    display_name: Swarm
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/swarm
+  card_splash_of_strength:
+    display_name: Splash Of Strength
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/splash_of_strength
+  card_harsh_world:
+    display_name: Harsh World
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/harsh_world
+  card_bee:
+    display_name: Bee
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/bee
+  card_healer:
+    display_name: Healer
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/healer
+  card_shaman:
+    display_name: Shaman
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/shaman
+  card_bard:
+    display_name: Bard
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/bard
+  card_warlock:
+    display_name: Warlock
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/warlock
+  card_music_disc:
+    display_name: Music Disc
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/music_disc
+  card_enderman:
+    display_name: Enderman
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/enderman
+  card_shulker:
+    display_name: Shulker
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/shulker
+  card_endermite:
+    display_name: Endermite
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/endermite
+  card_ender_dragon:
+    display_name: Ender Dragon
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/ender_dragon
+  card_summon_ender_dragon:
+    display_name: Summon Ender Dragon
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/summon_ender_dragon
+  card_mirror:
+    display_name: Mirror
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/mirror

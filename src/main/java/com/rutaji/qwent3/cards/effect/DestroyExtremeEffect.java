@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Destroys the monster with the lowest (or highest) power on the whole board (both sides); if several are tied,
  * all of them. No target to pick.
- * Destroying is not damage: on-hurt effects don't trigger, on-death ones do (in board order).
+ * Destroying is not damage: on-damaged effects don't trigger, on-death ones do (in board order).
  */
 public final class DestroyExtremeEffect implements Effect {
     private final CardType source;
@@ -56,6 +56,19 @@ public final class DestroyExtremeEffect implements Effect {
     public boolean isValidTarget(GameState state, int owner, int tile) {
         Unit unit = state.unit(tile);
         return unit != null && unit.power() == extremePower(state);
+    }
+
+    /** The monsters that are destroyed, with their power, e.g. "Bear (7), Bear (7)". */
+    @Override
+    public String logDetail(GameState state, int owner) {
+        List<String> names = new ArrayList<>();
+        for (int t = 0; t < GameState.BOARD_SIZE; t++) {
+            if (isValidTarget(state, owner, t)) {
+                Unit unit = state.unit(t);
+                names.add(unit.type().displayName() + " (" + unit.power() + ")");
+            }
+        }
+        return String.join(", ", names);
     }
 
     @Override

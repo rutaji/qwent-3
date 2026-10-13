@@ -71,10 +71,9 @@ public final class CardItems {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(card.isMonster() ? "Power: " + card.power() : "Spell", NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false));
-        if (!card.tags().isEmpty()) {
-            lore.add(Component.text(card.tagsText(), NamedTextColor.DARK_AQUA).decoration(TextDecoration.ITALIC, false));
+        for (Component line : CardText.lines(card)) {
+            lore.add(line.decoration(TextDecoration.ITALIC, false));
         }
-        lore.add(Component.text(card.description(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(CARD_KEY, PersistentDataType.STRING, card.name());
         item.setItemMeta(meta);

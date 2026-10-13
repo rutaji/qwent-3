@@ -23,8 +23,6 @@ import java.util.Objects;
  * The key has a fixed namespace ("qwent:deck"), so renaming the plugin doesn't lose saved decks.
  */
 public final class DeckStore {
-    private static final int DEFAULT_COPIES = 2;
-
     private static final NamespacedKey DECK_KEY = Objects.requireNonNull(NamespacedKey.fromString("qwent:deck"));
     /** Where decks were saved while the plugin was called ChangingItems; moved to {@link #DECK_KEY} when read. */
     private static final NamespacedKey LEGACY_DECK_KEY =
@@ -73,12 +71,31 @@ public final class DeckStore {
         player.getPersistentDataContainer().set(DECK_KEY, PersistentDataType.LIST.strings(), names);
     }
 
-    /** {@value #DEFAULT_COPIES} copies of every card in definition order, cut at {@link DeckRules#MAX_CARDS}. */
+    /** The fixed starting deck for players without a saved deck (21 cards). */
+    private static final List<Entry> DEFAULT_DECK = List.of(
+            new Entry(CardType.GRAVEL, 2),
+            new Entry(CardType.LIGHTNING, 1),
+            new Entry(CardType.SKELETON, 2),
+            new Entry(CardType.BLAZE, 1),
+            new Entry(CardType.BOAR, 1),
+            new Entry(CardType.BEE, 2),
+            new Entry(CardType.LEADER_ZOMBIE, 1),
+            new Entry(CardType.BASIC_ZOMBIE, 3),
+            new Entry(CardType.DESERT_ZOMBIE, 2),
+            new Entry(CardType.CACTUS, 2),
+            new Entry(CardType.SHAMAN, 2),
+            new Entry(CardType.ARROW, 1),
+            new Entry(CardType.ZOMBIE_AWAKENING, 1));
+
+    private record Entry(CardType card, int copies) {
+    }
+
+    /** The starting deck for players without a saved deck. */
     public static List<CardType> defaultDeck() {
         List<CardType> deck = new ArrayList<>();
-        for (CardType type : CardType.values()) {
-            for (int i = 0; i < DEFAULT_COPIES && deck.size() < DeckRules.MAX_CARDS; i++) {
-                deck.add(type);
+        for (Entry entry : DEFAULT_DECK) {
+            for (int i = 0; i < entry.copies(); i++) {
+                deck.add(entry.card());
             }
         }
         return deck;

@@ -4,31 +4,33 @@ import com.rutaji.qwent3.cards.CardType;
 import com.rutaji.qwent3.cards.GameState;
 import com.rutaji.qwent3.cards.Unit;
 import net.kyori.adventure.text.Component;
-import org.jspecify.annotations.Nullable;
 
-/** Increases a monster's power (on either side). */
+/** Increases the power of a monster the owner picks. */
 public final class BuffEffect implements Effect {
     private final CardType source;
     private final int amount;
-    private final @Nullable Unit exclude;
+    private final Targets targets;
 
-    /** @param exclude a unit that cannot be targeted (usually the card itself), or null */
-    public BuffEffect(CardType source, int amount, @Nullable Unit exclude) {
+    /** Buff any monster (either side). */
+    public BuffEffect(CardType source, int amount) {
+        this(source, amount, Targets.ANY);
+    }
+
+    public BuffEffect(CardType source, int amount, Targets targets) {
         this.source = source;
         this.amount = amount;
-        this.exclude = exclude;
+        this.targets = targets;
     }
 
     @Override
     public Component description() {
-        return Component.text(source.displayName() + ": give " + (exclude == null ? "a monster" : "another monster")
-                + " +" + amount + " power");
+        return Component.text(source.displayName() + ": give " + targets.text() + " +" + amount + " power");
     }
 
     @Override
     public boolean isValidTarget(GameState state, int owner, int tile) {
         Unit unit = state.unit(tile);
-        return unit != null && unit != exclude;
+        return unit != null && targets.allows(unit, owner);
     }
 
     @Override

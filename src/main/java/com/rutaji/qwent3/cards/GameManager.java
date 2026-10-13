@@ -14,8 +14,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -31,6 +33,8 @@ public final class GameManager implements Listener {
     /** Pending invites: invited player -> (inviter -> expiry time). */
     private final Map<UUID, Map<UUID, Long>> invites = new HashMap<>();
     private final Map<UUID, Ui> ui = new HashMap<>();
+    /** Players who hid the game history; kept across games until they leave the server. */
+    private final Set<UUID> historyHidden = new HashSet<>();
 
     /** Dialog state of a player: whether the game dialog is open, which pile screen, whether told it's their turn. */
     private static final class Ui {
@@ -174,6 +178,13 @@ public final class GameManager implements Listener {
         player.closeDialog();
     }
 
+    /** Shows or hides the history column for this player (kept until they leave the server). */
+    public void toggleHistory(Player player) {
+        if (!historyHidden.remove(player.getUniqueId())) {
+            historyHidden.add(player.getUniqueId());
+        }
+    }
+
     public void setView(Player player, @Nullable PileView view) {
         ui(player).view = view;
     }
@@ -187,7 +198,8 @@ public final class GameManager implements Listener {
         Ui u = ui(player);
         u.open = true;
         u.notified = false;
-        dialog.show(player, match, match.sideOf(player.getUniqueId()), u.view);
+        dialog.show(player, match, match.sideOf(player.getUniqueId()), u.view,
+                historyHidden.contains(player.getUniqueId()));
     }
 
     /**
@@ -264,5 +276,6 @@ public final class GameManager implements Listener {
             finish(match, GameState.other(side), match.name(side) + " left the game.");
         }
         ui.remove(id);
+        historyHidden.remove(id);
     }
 }

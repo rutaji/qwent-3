@@ -1,12 +1,16 @@
 package com.rutaji.qwent3.cards;
 
 import com.rutaji.qwent3.cards.effect.Effect;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 /**
  * State of one game between two players, side 0 and side 1. Knows nothing about Bukkit players.
@@ -22,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * other player than the previous one.
  *
  * Effects go into one FIFO queue, each with an owner: the player who played the card, or the player on whose
- * side a monster was hurt / died. Effects without a valid target are cancelled; a targeted effect stops the queue
+ * side a monster was damaged / died. Effects without a valid target are cancelled; a targeted effect stops the queue
  * until its owner picks a tile. The turn passes only when the queue is empty.
  */
 public final class GameState {
@@ -49,9 +53,17 @@ public final class GameState {
     private record QueuedEffect(Effect effect, int owner) {
     }
 
+    /**
+     * One line of the game history: who did it ({@code actor} 0 / 1, or -1 for neutral notes like round changes),
+     * the text, and whether it is the card played from hand that turn.
+     */
+    public record LogEntry(int actor, String text, boolean played) {
+    }
+
     private final Side[] sides;
     private final @Nullable Unit[] board = new Unit[BOARD_SIZE];
     private final Deque<QueuedEffect> queue = new ArrayDeque<>();
+    private final List<LogEntry> log = new ArrayList<>();
     private final int[] points = new int[2];
     private int round = 1;
     /** Power of both sides at the end of the previous round, or null in the first round. */
@@ -130,6 +142,39 @@ public final class GameState {
         return points[0] > points[1] ? 0 : points[1] > points[0] ? 1 : -1;
     }
 
+    /** The game history, oldest first. */
+    public List<LogEntry> log() {
+        return Collections.unmodifiableList(log);
+    }
+
+    private void log(int actor, String text, boolean played) {
+        log.add(new LogEntry(actor, text, played));
+    }
+
+    /** Logs an effect about to resolve (or being cancelled), with what it targets. */
+    private void logEffect(Effect effect, int owner, int target, boolean cancelled) {
+        String text = PlainTextComponentSerializer.plainText().serialize(effect.description());
+        if (cancelled) {
+            text += " - no target";
+        } else if (target >= 0) {
+            text += " -> " + targetName(effect, owner, target);
+        } else {
+            String detail = effect.logDetail(this, owner);
+            if (detail != null) {
+                text += " -> " + detail;
+            }
+        }
+        log(owner, text, false);
+    }
+
+    private String targetName(Effect effect, int owner, int target) {
+        if (effect.targetKind() == Effect.TargetKind.HAND) {
+            return sides[owner].hand.get(target).displayName();
+        }
+        Unit unit = board[target];
+        return unit != null ? unit.type().displayName() : "empty tile";
+    }
+
     /** The effect waiting for its owner to pick a target, or null. */
     public @Nullable Effect pendingEffect() {
         QueuedEffect head = queue.peekFirst();
@@ -169,7 +214,10 @@ public final class GameState {
 
     // ---- Player input ----
 
-    /** A click on a hand card: redraws it during the mulligan, otherwise selects it (on your turn). */
+    /**
+     * A click on a hand card: redraws it during the mulligan, picks it as the target of a pending hand-target effect
+     * (by its owner), otherwise selects it (on your turn).
+     */
     public void clickHand(int side, int index) {
         Side s = sides[side];
         if (index < 0 || index >= s.hand.size()) {
@@ -177,8 +225,24 @@ public final class GameState {
         }
         if (phase == Phase.MULLIGAN) {
             redraw(side, index);
-        } else if (phase == Phase.PLAYING && current == side && pendingEffect() == null) {
-            s.selectedHandIndex = s.selectedHandIndex == index ? -1 : index;
+        } else if (phase == Phase.PLAYING) {
+            QueuedEffect pending = queue.peekFirst();
+            if (pending != null) {
+                pick(pending, Effect.TargetKind.HAND, side, index);
+            } else if (current == side) {
+                s.selectedHandIndex = s.selectedHandIndex == index ? -1 : index;
+            }
+        }
+    }
+
+    /** Resolves the pending effect with this target, if it is the owner's valid target of the right kind. */
+    private void pick(QueuedEffect pending, Effect.TargetKind kind, int side, int target) {
+        Effect effect = pending.effect();
+        if (pending.owner() == side && effect.targetKind() == kind && effect.isValidTarget(this, side, target)) {
+            queue.removeFirst();
+            logEffect(effect, side, target, false);
+            effect.resolve(this, side, target);
+            resolveQueue();
         }
     }
 
@@ -245,11 +309,7 @@ public final class GameState {
         }
         QueuedEffect pending = queue.peekFirst();
         if (pending != null) {
-            if (pending.owner() == side && pending.effect().isValidTarget(this, side, tile)) {
-                queue.removeFirst();
-                pending.effect().resolve(this, side, tile);
-                resolveQueue();
-            }
+            pick(pending, Effect.TargetKind.TILE, side, tile);
             return;
         }
         CardType card = selectedCard(side);
@@ -257,18 +317,54 @@ public final class GameState {
             return;
         }
         if (card.isMonster()) {
-            if (board[tile] != null || sideOf(tile) != side) {
+            if (!canPlay(side, card, tile)) {
                 return;
             }
             removeSelectedFromHand(side);
+            log(side, card.displayName(), true);
             play(side, card, tile);
         } else {
             removeSelectedFromHand(side);
-            // A used spell goes to the graveyard right away; its effects then resolve from the queue.
+            log(side, card.displayName(), true);
+            // A used spell goes to the graveyard right away; its effects then resolve from the queue,
+            // followed by the opponent's units reacting to the spell.
             sides[side].graveyard.add(card);
-            queue(side, card.onPlay(null));
+            castSpell(side, card, false);
         }
         resolveQueue();
+    }
+
+    /**
+     * Casts a spell for {@code side}: queues its effects, then the opponent's units' reactions to a spell. With
+     * {@code next} the spell's effects go to the front of the queue (a spell played by an effect resolves right away)
+     * and the cast is logged. The card itself is not moved anywhere here.
+     */
+    public void castSpell(int side, CardType spell, boolean next) {
+        List<Effect> effects = spell.onPlay(null);
+        if (next) {
+            log(side, "Casts " + spell.displayName(), false);
+            for (Effect effect : effects.reversed()) {
+                queueNext(side, effect);
+            }
+        } else {
+            queue(side, effects);
+        }
+        for (Unit unit : board) {
+            if (unit != null && unit.owner() != side) {
+                queue(unit.owner(), unit.type().onOpponentSpell(unit));
+            }
+        }
+    }
+
+    /** Removes the card that entered a side's graveyard last among the matching ones; null if there is none. */
+    public @Nullable CardType banishLast(int side, Predicate<CardType> filter) {
+        List<CardType> graveyard = sides[side].graveyard;
+        for (int i = graveyard.size() - 1; i >= 0; i--) {
+            if (filter.test(graveyard.get(i))) {
+                return graveyard.remove(i);
+            }
+        }
+        return null;
     }
 
     /** Ends the player's turns for the rest of the round (only on their turn, with no effect pending). */
@@ -278,6 +374,7 @@ public final class GameState {
         }
         sides[side].passed = true;
         sides[side].selectedHandIndex = -1;
+        log(side, "Passed", false);
         nextTurn();
     }
 
@@ -323,6 +420,7 @@ public final class GameState {
             return;
         }
         round++;
+        log(-1, "--- Round " + round + " ---", false);
         starter = other(starter);
         for (int side = 0; side < 2; side++) {
             sides[side].passed = false;
@@ -347,27 +445,236 @@ public final class GameState {
         }
     }
 
-    /** Puts a monster on an empty tile of the owner's side and queues its on-play effects. */
-    public void play(int owner, CardType monster, int tile) {
-        if (!monster.isMonster() || board[tile] != null || sideOf(tile) != owner) {
-            throw new IllegalStateException("Cannot play " + monster + " on tile " + tile + " for side " + owner);
-        }
-        Unit unit = new Unit(monster, owner);
-        board[tile] = unit;
-        queue(owner, monster.onPlay(unit));
+    /** Moves a hand card to the graveyard. */
+    public void discard(int side, int index) {
+        Side s = sides[side];
+        s.graveyard.add(s.hand.remove(index));
     }
 
-    /** Reduces a unit's power and queues its on-hurt effects; below 1 power it is destroyed (on-death after). */
+    /**
+     * Draws the top-most deck card that matches (with a full hand it goes to the graveyard).
+     * False if the deck has no such card.
+     */
+    public boolean drawFirst(int side, Predicate<CardType> filter) {
+        Side s = sides[side];
+        for (int i = 0; i < s.deck.size(); i++) {
+            if (filter.test(s.deck.get(i))) {
+                CardType card = s.deck.remove(i);
+                if (s.hand.size() >= MAX_HAND) {
+                    s.graveyard.add(card);
+                } else {
+                    s.hand.add(card);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Puts a card on top of a side's deck. */
+    public void putOnTopOfDeck(int side, CardType card) {
+        sides[side].deck.addFirst(card);
+    }
+
+    /** Moves every copy of a card from a side's deck to their graveyard; returns how many. */
+    public int discardFromDeck(int side, CardType card) {
+        Side s = sides[side];
+        int moved = 0;
+        while (s.deck.remove(card)) {
+            s.graveyard.add(card);
+            moved++;
+        }
+        return moved;
+    }
+
+    /** Swaps a side's deck and graveyard, keeping both orders (the first graveyard card becomes the top card). */
+    public void swapDeckAndGraveyard(int side) {
+        Side s = sides[side];
+        List<CardType> oldDeck = new ArrayList<>(s.deck);
+        s.deck.clear();
+        s.deck.addAll(s.graveyard);
+        s.graveyard.clear();
+        s.graveyard.addAll(oldDeck);
+    }
+
+    // ---- Moving units (pistons) ----
+    // Along a column, "line positions" 0..ROWS-1 go from side 0's back row, side 0's front row, side 1's front row
+    // to side 1's back row.
+
+    /** The direction (+1 / -1 in line positions) towards a side. */
+    public static int directionTowards(int side) {
+        return side == 1 ? 1 : -1;
+    }
+
+    private static int linePosition(int tile) {
+        int localRow = (tile % TILES_PER_SIDE) / COLUMNS;
+        return sideOf(tile) == 0 ? ROWS_PER_SIDE - 1 - localRow : ROWS_PER_SIDE + localRow;
+    }
+
+    private static int tileAtLine(int position, int column) {
+        return position < ROWS_PER_SIDE
+                ? tile(0, ROWS_PER_SIDE - 1 - position, column)
+                : tile(1, position - ROWS_PER_SIDE, column);
+    }
+
+    /**
+     * The line position of the first empty tile from {@code tile} in a direction (the units in between get pushed
+     * there), or -1 if the chain of units would be pushed off the board.
+     */
+    private int shiftEnd(int tile, int direction) {
+        int column = tile % COLUMNS;
+        for (int position = linePosition(tile) + direction; position >= 0 && position < ROWS; position += direction) {
+            if (board[tileAtLine(position, column)] == null) {
+                return position;
+            }
+        }
+        return -1;
+    }
+
+    /** Whether the unit on the tile can be moved one row in the direction (pushing the units in front of it). */
+    public boolean canShift(int tile, int direction) {
+        return unit(tile) != null && shiftEnd(tile, direction) >= 0;
+    }
+
+    /**
+     * Moves the unit one row in the direction; units in the way are pushed along. Units that end on the other
+     * side belong to that side.
+     */
+    public void shift(int tile, int direction) {
+        if (!canShift(tile, direction)) {
+            return;
+        }
+        int column = tile % COLUMNS;
+        int start = linePosition(tile);
+        for (int position = shiftEnd(tile, direction); position != start; position -= direction) {
+            int to = tileAtLine(position, column);
+            int from = tileAtLine(position - direction, column);
+            Unit unit = board[from];
+            board[from] = null;
+            board[to] = unit;
+            unit.moveTo(to);
+        }
+    }
+
+    /** Shuffles a card into a side's deck at a random position. */
+    public void shuffleIntoDeck(int side, CardType card) {
+        List<CardType> deck = sides[side].deck;
+        deck.add(ThreadLocalRandom.current().nextInt(deck.size() + 1), card);
+    }
+
+    public void addToGraveyard(int side, CardType card) {
+        sides[side].graveyard.add(card);
+    }
+
+    /** Removes a random matching card from a side's graveyard for good; null if there is none. */
+    public @Nullable CardType banishRandom(int side, Predicate<CardType> filter) {
+        List<CardType> graveyard = sides[side].graveyard;
+        List<Integer> matching = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (filter.test(graveyard.get(i))) {
+                matching.add(i);
+            }
+        }
+        if (matching.isEmpty()) {
+            return null;
+        }
+        int index = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
+        return graveyard.remove(index);
+    }
+
+    /** The tile a unit is on, or -1 if it is not on the board. */
+    public int tileOf(Unit unit) {
+        for (int tile = 0; tile < BOARD_SIZE; tile++) {
+            if (board[tile] == unit) {
+                return tile;
+            }
+        }
+        return -1;
+    }
+
+    /** Whether {@code player} may put this monster on the tile: empty, and their side (or either, if treacherous). */
+    public boolean canPlay(int player, CardType monster, int tile) {
+        return monster.isMonster() && tile >= 0 && tile < BOARD_SIZE && board[tile] == null
+                && (sideOf(tile) == player || monster.hasKeyword(Keyword.TREACHEROUS));
+    }
+
+    /**
+     * Puts a monster on an empty tile. The unit belongs to the side of the tile (a treacherous monster on the
+     * opponent's side is the opponent's unit); its on-play effects belong to {@code player}, who played it.
+     */
+    public void play(int player, CardType monster, int tile) {
+        if (!canPlay(player, monster, tile)) {
+            throw new IllegalStateException("Cannot play " + monster + " on tile " + tile + " for side " + player);
+        }
+        Unit unit = new Unit(monster, sideOf(tile), tile);
+        board[tile] = unit;
+        queue(player, monster.onPlay(unit));
+    }
+
+    /** The tiles directly left and right of a tile, in the same row. */
+    public static int[] neighbours(int tile) {
+        int column = tile % COLUMNS;
+        if (column == 0) {
+            return new int[] {tile + 1};
+        }
+        if (column == COLUMNS - 1) {
+            return new int[] {tile - 1};
+        }
+        return new int[] {tile - 1, tile + 1};
+    }
+
+    /** Draws the top card of {@code deckSide}'s deck into {@code toSide}'s hand (full hand: their graveyard). */
+    public void drawFromDeckOf(int deckSide, int toSide) {
+        Side from = sides[deckSide];
+        if (from.deck.isEmpty()) {
+            return;
+        }
+        CardType card = from.deck.remove(0);
+        Side to = sides[toSide];
+        if (to.hand.size() >= MAX_HAND) {
+            to.graveyard.add(card);
+        } else {
+            to.hand.add(card);
+        }
+    }
+
+    /**
+     * Reduces a unit's power. Below 1 power it is destroyed (on-death effects); otherwise its
+     * "damaged and survives" effects are queued.
+     */
     public void damage(int tile, int amount) {
         Unit unit = board[tile];
         if (unit == null || amount <= 0) {
             return;
         }
         unit.addPower(-amount);
-        queue(unit.owner(), unit.type().onHurt(unit, amount));
         if (unit.power() < 1) {
             destroy(tile);
+        } else {
+            queue(unit.owner(), unit.type().onDamagedSurvive(unit, amount));
         }
+    }
+
+    public void setPower(int tile, int power) {
+        Unit unit = board[tile];
+        if (unit != null) {
+            unit.addPower(power - unit.power());
+        }
+    }
+
+    /** Removes a random matching card from a side's deck; null if there is none. */
+    public @Nullable CardType takeRandomFromDeck(int side, Predicate<CardType> filter) {
+        List<CardType> deck = sides[side].deck;
+        List<Integer> matching = new ArrayList<>();
+        for (int i = 0; i < deck.size(); i++) {
+            if (filter.test(deck.get(i))) {
+                matching.add(i);
+            }
+        }
+        if (matching.isEmpty()) {
+            return null;
+        }
+        return deck.remove((int) matching.get(ThreadLocalRandom.current().nextInt(matching.size())));
     }
 
     public void buff(int tile, int amount) {
@@ -420,10 +727,12 @@ public final class GameState {
             QueuedEffect head = queue.peekFirst();
             if (!head.effect().hasValidTargets(this, head.owner())) {
                 queue.removeFirst();
+                logEffect(head.effect(), head.owner(), -1, true);
             } else if (head.effect().needsTarget()) {
                 return;
             } else {
                 queue.removeFirst();
+                logEffect(head.effect(), head.owner(), -1, false);
                 head.effect().resolve(this, head.owner(), -1);
             }
         }

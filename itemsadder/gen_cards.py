@@ -13,19 +13,26 @@ import sys
 import zipfile
 import zlib
 
-CARDS = ["peasant", "archer", "knight", "mage", "dragon", "arrow", "two_arrows", "gravel", "lightning",
-         "skeleton", "evil_goblin", "boar", "bear", "basic_zombie", "leader_zombie", "horde", "zombie_awakening"]  # must match CardType (lower case)
+CARDS = ["arrow", "two_arrows", "gravel", "lightning",
+         "skeleton", "evil_goblin", "boar", "bear", "basic_zombie", "leader_zombie", "horde", "zombie_awakening",
+         "desert_zombie", "zombie_librarian", "blaze", "cactus", "beetroot", "bad_farming", "emerald", "creeper",
+         "diamond_hoe", "gold_hoe", "wooden_hoe", "potato", "fertilizing", "farmer", "wheat",
+         "thorny_rose", "brown_mushroom", "weeds", "switcharoo", "silverfish", "stone_bricks", "infestation", "piston",
+         "slime_piston", "drunk_brawler", "librarian",
+         "swarm", "splash_of_strength", "harsh_world", "bee", "healer", "shaman", "bard", "warlock", "music_disc",
+         "enderman", "shulker", "endermite", "ender_dragon", "summon_ender_dragon", "mirror"]  # must match CardType (lower case)
 ART_W, ART_H = 64, 96      # size of placeholder <card>.png made for missing art
 FRAME_W, FRAME_H = 40, 60  # tile_empty / select_frame placeholders
 ICON_SIZE = 32             # placeholder item texture textures/item/cards/<card>.png made when missing
 
-# Vanilla button sprites are overridden with transparent left/right edges, so the dialog's required
-# footer button can be made invisible (2 px wide). This affects ALL buttons in the game.
+# Minecraft's own font and heart sprites are taken from the client jar (see make_fonts).
 # Pass a different client jar as the first argument if needed.
 CLIENT_JAR = os.path.expanduser("~/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/"
                                 "libraries/com/mojang/minecraft/26.2/minecraft-26.2-client.jar")
-EDGE = 10
-BUTTON_SPRITES = ["button", "button_disabled", "button_highlighted"]
+
+# Fonts made from the client jar (see make_fonts): must match GameDialog.
+BIG_HEIGHT, BIG_ASCENT, BIG_SPACE = 12, 10, 6   # 1.5x the default 8 / 7 / 4
+HEART_SIZE, HEART_ASCENT = 18, 7  # 2x; ascent 7 = top on the line top, so it is centred on the line's bottom edge
 
 # A glyph's top is drawn at (line top + 7 - y_position).
 TEXT_CARD_H = 60
@@ -33,7 +40,7 @@ TEXT_ASCENT = 7
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONTENT = os.path.join(HERE, "contents", "qwent")
-# Raw resource pack files (vanilla overrides, space font). Must be a separate content folder:
+# Raw resource pack files (fonts and their textures). Must be a separate content folder:
 # ItemsAdder 4.1 puts every folder of a "textures/"-style content folder under assets/<namespace>/.
 RAW = os.path.join(HERE, "contents", "qwent_raw", "resourcepack")
 TEXTURES = os.path.join(CONTENT, "textures", "font", "cards")
@@ -104,28 +111,6 @@ def read_png(data):
     return w, h, pixels
 
 
-def override_buttons(client_jar):
-    out = os.path.join(RAW, "assets", "minecraft", "textures", "gui", "sprites", "widget")
-    os.makedirs(out, exist_ok=True)
-    with zipfile.ZipFile(client_jar) as jar:
-        for name in BUTTON_SPRITES:
-            base = f"assets/minecraft/textures/gui/sprites/widget/{name}"
-            w, h, px = read_png(jar.read(base + ".png"))
-            px = [(0, 0, 0, 0) if i % w < EDGE or i % w >= w - EDGE else p for i, p in enumerate(px)]
-            write_png(os.path.join(out, name + ".png"), px, w, h)
-            # The left/right nine-slice border must cover the transparent edge, or the tiled centre shows it
-            # again. Top/bottom stay vanilla: top + bottom must be less than the 20 px height.
-            meta = json.loads(jar.read(base + ".png.mcmeta"))
-            scaling = meta["gui"]["scaling"]
-            vanilla = scaling.get("border", 0)
-            if isinstance(vanilla, int):
-                vanilla = {"left": vanilla, "top": vanilla, "right": vanilla, "bottom": vanilla}
-            scaling["border"] = {"left": max(vanilla["left"], EDGE), "top": vanilla["top"],
-                                 "right": max(vanilla["right"], EDGE), "bottom": vanilla["bottom"]}
-            with open(os.path.join(out, name + ".png.mcmeta"), "w") as f:
-                json.dump(meta, f, indent=4)
-
-
 def write_space_font():
     """qwent:space font: U+F801.. = -1,-2,...,-128 px; U+F821.. = +1,...,+128 px (see Glyphs.space)."""
     advances = {}
@@ -136,6 +121,44 @@ def write_space_font():
     os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, "space.json"), "w") as f:
         json.dump({"providers": [{"type": "space", "advances": advances}]}, f, indent=2)
+
+
+def write_png_rgba(path, pixels, w, h):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write_png(path, pixels, w, h)
+
+
+def make_fonts(client_jar):
+    """qwent:big - Minecraft's ASCII font at 1.5x (12 px); qwent:hearts - U+E000 full heart, U+E001 empty heart."""
+    font_dir = os.path.join(RAW, "assets", "qwent", "font")
+    os.makedirs(font_dir, exist_ok=True)
+    with zipfile.ZipFile(client_jar) as jar:
+        default = json.loads(jar.read("assets/minecraft/font/include/default.json"))
+        ascii_provider = next(p for p in default["providers"] if p.get("file") == "minecraft:font/ascii.png")
+        big = {"providers": [
+            {"type": "space", "advances": {" ": BIG_SPACE}},
+            {"type": "bitmap", "file": "minecraft:font/ascii.png", "height": BIG_HEIGHT, "ascent": BIG_ASCENT,
+             "chars": ascii_provider["chars"]},
+        ]}
+        with open(os.path.join(font_dir, "big.json"), "w") as f:
+            json.dump(big, f, indent=2)
+
+        base = "assets/minecraft/textures/gui/sprites/hud/heart/"
+        w, h, container = read_png(jar.read(base + "container.png"))
+        _, _, full = read_png(jar.read(base + "full.png"))
+        # Full heart = the red heart drawn over the outline.
+        full_heart = [f if f[3] > 0 else c for c, f in zip(container, full)]
+        hearts_dir = os.path.join(RAW, "assets", "qwent", "textures", "font", "hearts")
+        write_png_rgba(os.path.join(hearts_dir, "full.png"), full_heart, w, h)
+        write_png_rgba(os.path.join(hearts_dir, "empty.png"), container, w, h)
+    hearts = {"providers": [
+        {"type": "bitmap", "file": "qwent:font/hearts/full.png", "height": HEART_SIZE, "ascent": HEART_ASCENT,
+         "chars": ["\ue000"]},
+        {"type": "bitmap", "file": "qwent:font/hearts/empty.png", "height": HEART_SIZE, "ascent": HEART_ASCENT,
+         "chars": ["\ue001"]},
+    ]}
+    with open(os.path.join(font_dir, "hearts.json"), "w") as f:
+        json.dump(hearts, f, indent=2)
 
 
 def placeholder(path, fill, border, border_px, w, h):
@@ -183,9 +206,9 @@ def main():
 
     client_jar = sys.argv[1] if len(sys.argv) > 1 else CLIENT_JAR
     if os.path.exists(client_jar):
-        override_buttons(client_jar)
+        make_fonts(client_jar)
     else:
-        print(f"Client jar not found ({client_jar}); button sprites not overridden.")
+        print(f"Client jar not found ({client_jar}); fonts qwent:big and qwent:hearts not made.")
 
 
 if __name__ == "__main__":

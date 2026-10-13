@@ -12,7 +12,7 @@ public final class DeckRules {
     public static final int MAX_CARDS = 30;
     public static final int MAX_COPIES = 3;
     /** Cards that may not be in a deck at all. */
-    public static final Set<CardType> BLACKLIST = Set.of();
+    public static final Set<CardType> BLACKLIST = Set.of(CardType.ENDER_DRAGON);
 
     private DeckRules() {
     }

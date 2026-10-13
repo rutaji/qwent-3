@@ -22,6 +22,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
 public final class Qwent3 extends JavaPlugin {
     private @Nullable DeckEditor deckEditor;
 
@@ -69,11 +71,16 @@ public final class Qwent3 extends JavaPlugin {
                                             games.surrender(executor(ctx));
                                             return 1;
                                         }))
-                                // Gives every card (DeckRules.MAX_COPIES of each) as items. Ops only by default.
+                                // Gives every card that is allowed in decks (DeckRules.MAX_COPIES of each) as items. Ops only by default.
                                 .then(Commands.literal("all")
                                         .requires(source -> source.getSender().hasPermission("qwent.admin"))
                                         .executes(ctx -> {
                                             giveAllCards(executor(ctx), cardItems);
+                                            return 1;
+                                        }))
+                                .then(Commands.literal("info")
+                                        .executes(ctx -> {
+                                            deckInfo(executor(ctx), decks);
                                             return 1;
                                         }))
                                 .then(Commands.literal("deck")
@@ -87,8 +94,20 @@ public final class Qwent3 extends JavaPlugin {
         getLogger().info("qwent3 enabled!");
     }
 
+    /** Card, monster and spell counts of the player's starting deck, and whether it is valid. */
+    private static void deckInfo(Player player, DeckStore decks) {
+        List<CardType> deck = decks.deck(player);
+        long monsters = deck.stream().filter(CardType::isMonster).count();
+        player.sendMessage(Component.text("Your deck: " + deck.size() + " cards (" + monsters + " monsters, "
+                + (deck.size() - monsters) + " spells)", NamedTextColor.GOLD));
+        DeckEditor.tellValidity(player, deck);
+    }
+
     private static void giveAllCards(Player player, CardItems cardItems) {
         for (CardType card : CardType.values()) {
+            if (DeckRules.BLACKLIST.contains(card)) {
+                continue;
+            }
             player.getInventory().addItem(cardItems.create(card, DeckRules.MAX_COPIES)).values()
                     .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         }

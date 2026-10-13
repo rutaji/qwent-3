@@ -9,7 +9,7 @@ import org.bukkit.plugin.Plugin;
 
 /**
  * Handles clicks on the game dialog: "qwent:tile/N", "qwent:hand/N", "qwent:keep", "qwent:pass",
- * "qwent:view/{mine|theirs}/{deck|graveyard}", "qwent:back", "qwent:close".
+ * "qwent:view/{mine|theirs}/{deck|graveyard}", "qwent:back", "qwent:history", "qwent:close".
  */
 public final class DialogClickListener implements Listener {
     private final Plugin plugin;
@@ -52,6 +52,11 @@ public final class DialogClickListener implements Listener {
             Pile pile = parts.length > 2 && parts[2].equals("deck") ? Pile.DECK : Pile.GRAVEYARD;
             // The opponent's deck is hidden.
             games.setView(player, pileSide != side && pile == Pile.DECK ? null : new PileView(pileSide, pile));
+            games.show(player);
+            return;
+        }
+        if (path.equals("history")) {
+            games.toggleHistory(player);
             games.show(player);
             return;
         }
