@@ -51,7 +51,7 @@ public final class GameDialog {
     /** Default font: digits and most letters are 5 px + 1 px spacing. */
     private static final int CHAR_W = 6;
     /** Empty lines between the board and the hand. */
-    private static final int HAND_GAP_LINES = 1;
+    private static final int HAND_GAP_LINES = 2;
     /**
      * Width of the label areas left and right of the board. Both sides are equally wide,
      * so the (centred) board stays in the middle.
@@ -60,9 +60,9 @@ public final class GameDialog {
     private static final int SIDE_MARGIN = 8;
     private static final int BODY_WIDTH = 1024;
     /** History column left of the board (outside the centred line), and the gap between it and the left labels. */
-    // Sized for 1920x1080 at GUI scale 2 (960 px wide, 480 px from the centre): board line 206 + gap 15 + column 245
-    // = 466 px, leaving a small margin at the screen edge.
-    private static final int HISTORY_W = 245;
+    // Sized for 1920x1080 at GUI scale 2 (960 px wide, 480 px from the centre): shift 10 + board line 206 + gap 15
+    // + column 235 = 466 px, leaving a small margin at the screen edge.
+    private static final int HISTORY_W = 235;
     private static final int HISTORY_GAP = 15;
     /** Lines above the board in the board block: the status line and an empty line. */
     private static final int TOP_LINES = 2;
@@ -70,10 +70,15 @@ public final class GameDialog {
     private static final int BOARD_LINE_W = 2 * SIDE_W + GameState.COLUMNS * CARD_W + (GameState.COLUMNS - 1) * GAP;
     private static final int EXIT_W = 60;
     /** Distance of the turn text and the hearts from the board. */
-    private static final int TURN_MARGIN = 20;
+    private static final int TURN_MARGIN = 120;
     /** Distance of the hearts from the board. */
-    private static final int HEARTS_MARGIN = 45;
-    /** Minecraft's ASCII font at 1.5x, and the heart glyphs (U+E000 full, U+E001 empty, 18 px + 1). */
+    private static final int HEARTS_MARGIN = 140;
+    /**
+     * How far all card areas (game board + hand + history, mulligan hand, deck / graveyard screens) are moved left
+     * of the dialog's centre: in game the dialog content shows up this much right of the screen centre.
+     */
+    private static final int BOARD_SHIFT = 15;
+    /** Minecraft's ASCII font at 2x, and the heart glyphs (U+E000 full, U+E001 empty, 18 px + 1). */
     private static final Key BIG_FONT = Key.key("qwent", "big");
     private static final Key HEARTS_FONT = Key.key("qwent", "hearts");
     private static final char HEART_FULL = '\uE000';
@@ -205,39 +210,41 @@ public final class GameDialog {
                 : historyLines(state, side, historyLineCount).iterator();
 
         Component status = statusLine(match, side).shadowColor(ShadowColor.shadowColor(0xFF2A2A2A));
+        // Every line ends with shiftPad, which moves the whole centred layout BOARD_SHIFT px to the left.
+        Component shiftPad = shiftPad();
         TextComponent.Builder board = Component.text()
-                .append(history.next()).append(padToBoard(status, textWidth(plain(status))))
+                .append(history.next()).append(padToBoard(status, textWidth(plain(status)))).append(shiftPad)
                 .append(Component.newline())
-                .append(history.next()).append(Glyphs.space(BOARD_LINE_W));
+                .append(history.next()).append(Glyphs.space(BOARD_LINE_W)).append(shiftPad);
         for (int line = 0; line < boardLines.size(); line++) {
             board.append(Component.newline())
                     .append(history.next())
                     .append(left[line] != null ? left[line] : Glyphs.space(SIDE_W))
                     .append(boardLines.get(line))
-                    .append(right[line] != null ? right[line] : Glyphs.space(SIDE_W));
+                    .append(right[line] != null ? right[line] : Glyphs.space(SIDE_W))
+                    .append(shiftPad);
         }
-        TextComponent.Builder hand = Component.text();
+        // The hand is in the same text field as the board (separate fields get a gap between them, which would
+        // break the history column).
         for (int i = 0; i < HAND_GAP_LINES; i++) {
-            hand.append(history.next()).append(Glyphs.space(BOARD_LINE_W)).append(Component.newline());
+            board.append(Component.newline())
+                    .append(history.next()).append(Glyphs.space(BOARD_LINE_W)).append(shiftPad);
         }
-        for (int line = 0; line < handLines.size(); line++) {
-            if (line > 0) {
-                hand.append(Component.newline());
-            }
-            hand.append(history.next()).append(padToBoard(handLines.get(line), handWidth));
+        for (Component handLine : handLines) {
+            board.append(Component.newline())
+                    .append(history.next()).append(padToBoard(handLine, handWidth)).append(shiftPad);
         }
         // Under the history column: show / hide it.
         String toggle = historyHidden ? "[ Show history ]" : "[ Hide history ]";
         Component toggleText = Component.text(toggle, NamedTextColor.GOLD)
                 .shadowColor(ShadowColor.shadowColor(0xFF2A2A2A))
                 .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "history")));
-        hand.append(Component.newline())
+        board.append(Component.newline())
                 .append(historyCell(toggleText, textWidth(toggle)))
-                .append(Glyphs.space(BOARD_LINE_W));
+                .append(Glyphs.space(BOARD_LINE_W)).append(shiftPad);
 
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(board.build().shadowColor(ShadowColor.none()), BODY_WIDTH));
-        body.add(DialogBody.plainMessage(hand.build().shadowColor(ShadowColor.none()), BODY_WIDTH));
         if (myTurn && pending == null && !own.passed()) {
             body.add(DialogBody.plainMessage(Component.text("[ Pass ]", NamedTextColor.GOLD)
                     .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "pass")))
@@ -302,7 +309,7 @@ public final class GameDialog {
                 if (!firstLine) {
                     rows.append(Component.newline());
                 }
-                rows.append(line);
+                rows.append(line).append(shiftPad());
                 firstLine = false;
             }
         }
@@ -333,7 +340,7 @@ public final class GameDialog {
             if (line > 0) {
                 hand.append(Component.newline());
             }
-            hand.append(Glyphs.space(indent)).append(handLines.get(line));
+            hand.append(Glyphs.space(indent)).append(handLines.get(line)).append(shiftPad());
         }
         return hand.build().shadowColor(ShadowColor.none());
     }
@@ -350,6 +357,11 @@ public final class GameDialog {
             handCells[i] = handCell(own, i, highlighted);
         }
         return rowLines(handCells);
+    }
+
+    /** Trailing space that moves a centred line {@link #BOARD_SHIFT} px to the left. */
+    private static Component shiftPad() {
+        return Glyphs.space(2 * BOARD_SHIFT);
     }
 
     /** Centres a line of known width inside exactly {@link #BOARD_LINE_W} (wider lines get negative padding). */
@@ -592,7 +604,7 @@ public final class GameDialog {
         return Component.text("Tied", NamedTextColor.GOLD);
     }
 
-    /** "Your turn" / "Opponent's turn" in the 1.5x font. */
+    /** "Your turn" / "Opponent's turn" in the 2x font. */
     private static Component turnLabel(boolean myTurn) {
         String text = myTurn ? "Your turn" : "Opponent's turn";
         Component label = Component.text(text, myTurn ? NamedTextColor.GREEN : NamedTextColor.RED)
@@ -614,11 +626,11 @@ public final class GameDialog {
         return placeLabel(label, GameState.POINTS_TO_WIN * HEART_ADVANCE, HEARTS_MARGIN, false);
     }
 
-    /** Width in the 1.5x font: every glyph is 1.5x as wide (rounded) plus 1 px spacing; a space is 6 px. */
+    /** Width in the 2x font (qwent:big): every glyph is twice as wide plus 1 px spacing; a space is 8 px. */
     private static int bigTextWidth(String text) {
         int width = 0;
         for (char c : text.toCharArray()) {
-            width += c == ' ' ? 6 : (int) (0.5 + (textWidth(String.valueOf(c)) - 1) * 1.5) + 1;
+            width += c == ' ' ? 8 : (textWidth(String.valueOf(c)) - 1) * 2 + 1;
         }
         return width;
     }

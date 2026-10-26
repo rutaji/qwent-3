@@ -3,14 +3,14 @@
     {
       "type": "space",
       "advances": {
-        " ": 6
+        " ": 8
       }
     },
     {
       "type": "bitmap",
       "file": "minecraft:font/ascii.png",
-      "height": 12,
-      "ascent": 10,
+      "height": 16,
+      "ascent": 14,
       "chars": [
         "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
         "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",

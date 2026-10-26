@@ -31,7 +31,7 @@ CLIENT_JAR = os.path.expanduser("~/.var/app/org.prismlauncher.PrismLauncher/data
                                 "libraries/com/mojang/minecraft/26.2/minecraft-26.2-client.jar")
 
 # Fonts made from the client jar (see make_fonts): must match GameDialog.
-BIG_HEIGHT, BIG_ASCENT, BIG_SPACE = 12, 10, 6   # 1.5x the default 8 / 7 / 4
+BIG_HEIGHT, BIG_ASCENT, BIG_SPACE = 16, 14, 8   # 2x the default 8 / 7 / 4
 HEART_SIZE, HEART_ASCENT = 18, 7  # 2x; ascent 7 = top on the line top, so it is centred on the line's bottom edge
 
 # A glyph's top is drawn at (line top + 7 - y_position).
@@ -129,7 +129,7 @@ def write_png_rgba(path, pixels, w, h):
 
 
 def make_fonts(client_jar):
-    """qwent:big - Minecraft's ASCII font at 1.5x (12 px); qwent:hearts - U+E000 full heart, U+E001 empty heart."""
+    """qwent:big - Minecraft's ASCII font at 2x (16 px); qwent:hearts - U+E000 full heart, U+E001 empty heart."""
     font_dir = os.path.join(RAW, "assets", "qwent", "font")
     os.makedirs(font_dir, exist_ok=True)
     with zipfile.ZipFile(client_jar) as jar:
