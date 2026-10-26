@@ -64,6 +64,11 @@ public final class GameDialog {
     // + column 235 = 466 px, leaving a small margin at the screen edge.
     private static final int HISTORY_W = 235;
     private static final int HISTORY_GAP = 15;
+    /**
+     * Lines below the hand: an empty line, the [ Pass ] line, then room for the history to continue down (the
+     * dialog still fits 1080p at GUI scale 2).
+     */
+    private static final int BOTTOM_LINES = 7;
     /** Lines above the board in the board block: the status line and an empty line. */
     private static final int TOP_LINES = 2;
     /** Width of a board line: labels on both sides and five cards. */
@@ -204,7 +209,7 @@ public final class GameDialog {
         // lines up from the status line at the top to the bottom of the hand.
         List<Component> handLines = handLines(state, side);
         int handWidth = own.handSize() == 0 ? 0 : own.handSize() * CARD_W + (own.handSize() - 1) * GAP;
-        int historyLineCount = TOP_LINES + boardLines.size() + HAND_GAP_LINES + handLines.size();
+        int historyLineCount = TOP_LINES + boardLines.size() + HAND_GAP_LINES + handLines.size() + BOTTOM_LINES;
         Iterator<Component> history = historyHidden
                 ? Collections.nCopies(historyLineCount, (Component) Component.empty()).iterator()
                 : historyLines(state, side, historyLineCount).iterator();
@@ -234,6 +239,21 @@ public final class GameDialog {
             board.append(Component.newline())
                     .append(history.next()).append(padToBoard(handLine, handWidth)).append(shiftPad);
         }
+        // Below the hand: [ Pass ] on the second line, the rest empty - the history continues down beside them.
+        boolean canPass = myTurn && pending == null && !own.passed();
+        for (int i = 0; i < BOTTOM_LINES; i++) {
+            Component content = Glyphs.space(BOARD_LINE_W);
+            if (i == 1 && canPass) {
+                Component pass = Component.text("[ Pass ]", NamedTextColor.GOLD)
+                        .shadowColor(ShadowColor.shadowColor(0xFF2A2A2A))
+                        .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "pass")))
+                        .hoverEvent(HoverEvent.showText(Component.text(
+                                "End your turns for the rest of the round.\nWhen both players passed, the higher power"
+                                        + " gets a point.\n" + GameState.POINTS_TO_WIN + " points win the game.")));
+                content = padToBoard(pass, textWidth("[ Pass ]"));
+            }
+            board.append(Component.newline()).append(history.next()).append(content).append(shiftPad);
+        }
         // Under the history column: show / hide it.
         String toggle = historyHidden ? "[ Show history ]" : "[ Hide history ]";
         Component toggleText = Component.text(toggle, NamedTextColor.GOLD)
@@ -245,13 +265,6 @@ public final class GameDialog {
 
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(board.build().shadowColor(ShadowColor.none()), BODY_WIDTH));
-        if (myTurn && pending == null && !own.passed()) {
-            body.add(DialogBody.plainMessage(Component.text("[ Pass ]", NamedTextColor.GOLD)
-                    .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "pass")))
-                    .hoverEvent(HoverEvent.showText(Component.text(
-                            "End your turns for the rest of the round.\nWhen both players passed, the higher power"
-                                    + " gets a point.\n" + GameState.POINTS_TO_WIN + " points win the game.")))));
-        }
         return dialog("Qwent vs " + match.name(opponent), body);
     }
 

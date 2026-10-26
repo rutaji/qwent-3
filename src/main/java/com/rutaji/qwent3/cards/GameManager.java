@@ -1,5 +1,8 @@
 package com.rutaji.qwent3.cards;
 
+import com.rutaji.qwent3.ai.AiDriver;
+import com.rutaji.qwent3.ai.AiRegistry;
+import com.rutaji.qwent3.ai.QwentAi;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -11,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 /**
  * Running games, invites, and what each player's dialog shows. A player can be in one game at a time.
@@ -43,9 +48,12 @@ public final class GameManager implements Listener {
         boolean notified;
     }
 
-    public GameManager(DeckStore decks, GameDialog dialog) {
+    private final Logger logger;
+
+    public GameManager(DeckStore decks, GameDialog dialog, Logger logger) {
         this.decks = decks;
         this.dialog = dialog;
+        this.logger = logger;
     }
 
     public @Nullable Match match(Player player) {
@@ -151,9 +159,51 @@ public final class GameManager implements Listener {
     }
 
     private List<CardType> shuffledDeck(Player player) {
-        List<CardType> deck = new ArrayList<>(decks.deck(player));
+        return shuffled(decks.deck(player));
+    }
+
+    private static List<CardType> shuffled(List<CardType> cards) {
+        List<CardType> deck = new ArrayList<>(cards);
         Collections.shuffle(deck);
         return deck;
+    }
+
+    // ---- Singleplayer ----
+
+    /** Starts a game against a registered AI (the player is side 0, the AI side {@link Match#AI_SIDE}). */
+    public void startSingleplayer(Player player, String aiName) {
+        String name = AiRegistry.find(aiName);
+        if (name == null) {
+            player.sendMessage(Component.text("Unknown AI '" + aiName + "'. Available: "
+                    + String.join(", ", AiRegistry.names()), NamedTextColor.RED));
+            return;
+        }
+        if (matches.containsKey(player.getUniqueId())) {
+            player.sendMessage(Component.text("You are already in a game. /qwent surrender to leave it.", NamedTextColor.RED));
+            return;
+        }
+        if (!checkDeck(player)) {
+            return;
+        }
+        QwentAi ai = AiRegistry.create(name);
+        GameState state = GameState.start(shuffledDeck(player), shuffled(ai.deck()));
+        UUID aiId = UUID.nameUUIDFromBytes(("qwent-ai:" + name).getBytes(StandardCharsets.UTF_8));
+        Match match = new Match(state, player.getUniqueId(), player.getName(), aiId, name, ai);
+        matches.put(player.getUniqueId(), match);
+        invites.remove(player.getUniqueId());
+        Ui u = ui(player);
+        u.view = null;
+        u.notified = false;
+        runAi(match);
+        show(player);
+    }
+
+    /** Lets the match's AI (if any) act while the game waits for it. */
+    private void runAi(Match match) {
+        QwentAi ai = match.ai();
+        if (ai != null) {
+            AiDriver.run(match.state(), Match.AI_SIDE, ai, match.name(Match.AI_SIDE), logger);
+        }
     }
 
     // ---- Dialog ----
@@ -207,6 +257,7 @@ public final class GameManager implements Listener {
      * refreshes the opponent's (if open; if closed and it is their move, they get a chat message).
      */
     public void afterAction(Player clicker, Match match) {
+        runAi(match);
         GameState state = match.state();
         if (state.phase() == GameState.Phase.OVER) {
             finish(match, state.winner(), "Final points: " + match.name(0) + " " + state.points(0) + " : "

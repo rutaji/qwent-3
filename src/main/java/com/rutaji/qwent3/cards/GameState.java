@@ -367,6 +367,24 @@ public final class GameState {
         return null;
     }
 
+    /**
+     * Plays a hand card directly (used by the AI): like selecting it and clicking the tile. For a spell the tile does
+     * not matter (any value). Ignored if it isn't that player's turn or the move is not allowed.
+     */
+    public void playCard(int side, int handIndex, int tile) {
+        Side s = sides[side];
+        if (phase != Phase.PLAYING || current != side || pendingEffect() != null || s.passed
+                || handIndex < 0 || handIndex >= s.hand.size()) {
+            return;
+        }
+        s.selectedHandIndex = handIndex;
+        clickTile(side, s.hand.get(handIndex).isMonster() ? tile : 0);
+        if (s.selectedHandIndex == handIndex && handIndex < s.hand.size()) {
+            // Not played (illegal tile): don't leave the card selected.
+            s.selectedHandIndex = -1;
+        }
+    }
+
     /** Ends the player's turns for the rest of the round (only on their turn, with no effect pending). */
     public void pass(int side) {
         if (phase != Phase.PLAYING || current != side || pendingEffect() != null) {

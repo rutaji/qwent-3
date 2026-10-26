@@ -1,5 +1,6 @@
 package com.rutaji.qwent3;
 
+import com.rutaji.qwent3.ai.AiRegistry;
 import com.rutaji.qwent3.cards.CardItems;
 import com.rutaji.qwent3.cards.CardType;
 import com.rutaji.qwent3.cards.DeckEditor;
@@ -9,6 +10,7 @@ import com.rutaji.qwent3.cards.DialogClickListener;
 import com.rutaji.qwent3.cards.GameDialog;
 import com.rutaji.qwent3.cards.GameManager;
 import com.rutaji.qwent3.cards.Glyphs;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -33,7 +35,7 @@ public final class Qwent3 extends JavaPlugin {
         CardItems cardItems = new CardItems(this);
         DeckEditor deckEditor = new DeckEditor(decks, cardItems);
         this.deckEditor = deckEditor;
-        GameManager games = new GameManager(decks, new GameDialog(new Glyphs(getLogger())));
+        GameManager games = new GameManager(decks, new GameDialog(new Glyphs(getLogger())), getLogger());
 
         getServer().getPluginManager().registerEvents(games, this);
         getServer().getPluginManager().registerEvents(deckEditor, this);
@@ -64,6 +66,18 @@ public final class Qwent3 extends JavaPlugin {
                                         .then(Commands.argument("player", ArgumentTypes.player())
                                                 .executes(ctx -> {
                                                     games.decline(executor(ctx), target(ctx));
+                                                    return 1;
+                                                })))
+                                // Game against an AI registered in AiRegistry.
+                                .then(Commands.literal("singleplayer")
+                                        .then(Commands.argument("ai", StringArgumentType.greedyString())
+                                                .suggests((ctx, builder) -> {
+                                                    AiRegistry.names().forEach(builder::suggest);
+                                                    return builder.buildFuture();
+                                                })
+                                                .executes(ctx -> {
+                                                    games.startSingleplayer(executor(ctx),
+                                                            StringArgumentType.getString(ctx, "ai"));
                                                     return 1;
                                                 })))
                                 .then(Commands.literal("surrender")
