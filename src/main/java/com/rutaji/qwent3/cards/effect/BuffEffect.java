@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 import net.kyori.adventure.text.Component;
 
 /** Increases the power of a monster the owner picks. */
@@ -34,7 +35,7 @@ public final class BuffEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int tile) {
-        state.buff(tile, amount);
+    public void resolve(GameEngine engine, int owner, int tile) {
+        engine.buff(tile, amount);
     }
 }

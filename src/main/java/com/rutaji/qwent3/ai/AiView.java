@@ -1,7 +1,7 @@
 package com.rutaji.qwent3.ai;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import com.rutaji.qwent3.cards.effect.Effect;
 import org.jspecify.annotations.Nullable;
 

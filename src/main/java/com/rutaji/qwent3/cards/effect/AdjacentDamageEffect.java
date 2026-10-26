@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 import net.kyori.adventure.text.Component;
 
 /** Damages the monsters directly left and right of a unit (same row). No target to pick. */
@@ -48,11 +49,11 @@ public final class AdjacentDamageEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
+    public void resolve(GameEngine engine, int owner, int target) {
         // Both neighbours are found before either is damaged.
-        int[] tiles = GameState.neighbours(state.tileOf(center));
+        int[] tiles = GameState.neighbours(engine.state().tileOf(center));
         for (int tile : tiles) {
-            state.damage(tile, amount);
+            engine.damage(tile, amount);
         }
     }
 }

@@ -1,7 +1,8 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;
 
 /** Swaps the owner's deck and graveyard, without shuffling. No target to pick. */
@@ -28,7 +29,7 @@ public final class SwapDeckAndGraveyardEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        state.swapDeckAndGraveyard(owner);
+    public void resolve(GameEngine engine, int owner, int target) {
+        engine.swapDeckAndGraveyard(owner);
     }
 }

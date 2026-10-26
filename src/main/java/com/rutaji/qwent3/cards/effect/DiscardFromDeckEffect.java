@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Pile;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import net.kyori.adventure.text.Component;
 
 /** Moves every copy of a card from the owner's deck to their graveyard. Cancelled if there is none. */
@@ -36,7 +37,7 @@ public final class DiscardFromDeckEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        state.discardFromDeck(owner, card);
+    public void resolve(GameEngine engine, int owner, int target) {
+        engine.discardFromDeck(owner, card);
     }
 }

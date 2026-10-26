@@ -1,7 +1,8 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -37,10 +38,10 @@ public final class MirrorEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        CardType spell = state.banishLast(GameState.other(owner), card -> !card.isMonster());
+    public void resolve(GameEngine engine, int owner, int target) {
+        CardType spell = engine.banishLast(GameState.other(owner), card -> !card.isMonster());
         if (spell != null) {
-            state.castSpell(owner, spell, true);
+            engine.castSpell(owner, spell, true);
         }
     }
 }

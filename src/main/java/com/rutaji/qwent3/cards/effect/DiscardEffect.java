@@ -1,7 +1,8 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;
 
 /** The owner discards a card of their choice from hand. Cancelled if the hand is empty. */
@@ -28,7 +29,7 @@ public final class DiscardEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        state.discard(owner, target);
+    public void resolve(GameEngine engine, int owner, int target) {
+        engine.discard(owner, target);
     }
 }

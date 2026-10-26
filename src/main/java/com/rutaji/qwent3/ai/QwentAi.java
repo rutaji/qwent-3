@@ -1,7 +1,7 @@
 package com.rutaji.qwent3.ai;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.DeckStore;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.deck.DeckStore;
 
 import java.util.List;
 

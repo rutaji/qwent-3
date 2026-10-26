@@ -1,7 +1,8 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
@@ -58,12 +59,12 @@ public final class SummonEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int tile) {
+    public void resolve(GameEngine engine, int owner, int tile) {
         if (random) {
-            List<Integer> empty = emptyTiles(state, owner);
+            List<Integer> empty = emptyTiles(engine.state(), owner);
             tile = empty.get(ThreadLocalRandom.current().nextInt(empty.size()));
         }
-        state.play(owner, summoned, tile);
+        engine.play(owner, summoned, tile);
     }
 
     private List<Integer> emptyTiles(GameState state, int owner) {

@@ -1,6 +1,6 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 
 /** Which monsters an effect may target, seen from the effect's owner. */
 public enum Targets {

@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Pile;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -36,13 +37,13 @@ public final class PlayFromPileEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int tile) {
-        if (!state.removeFromPile(owner, pile, card)) {
+    public void resolve(GameEngine engine, int owner, int tile) {
+        if (!engine.removeFromPile(owner, pile, card)) {
             return;
         }
-        state.play(owner, card, tile);
-        if (state.pileContains(owner, pile, card)) {
-            state.queueNext(owner, this);
+        engine.play(owner, card, tile);
+        if (engine.state().pileContains(owner, pile, card)) {
+            engine.queueNext(owner, this);
         }
     }
 }

@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -29,14 +30,14 @@ public final class ReplayEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        Unit unit = state.unit(target);
+    public void resolve(GameEngine engine, int owner, int target) {
+        Unit unit = engine.state().unit(target);
         if (unit == null) {
             return;
         }
-        state.destroy(target);
+        engine.destroy(target);
         // At the front of the queue: placing the copy is still part of this card, before the on-death effects.
-        state.queueNext(owner, new PlaceCopy(unit.type()));
+        engine.queueNext(owner, new PlaceCopy(unit.type()));
     }
 
     /** Second step: the owner picks a tile for the copy (where that card may be played). */
@@ -58,8 +59,8 @@ public final class ReplayEffect implements Effect {
         }
 
         @Override
-        public void resolve(GameState state, int owner, int target) {
-            state.play(owner, copy, target);
+        public void resolve(GameEngine engine, int owner, int target) {
+            engine.play(owner, copy, target);
         }
     }
 }

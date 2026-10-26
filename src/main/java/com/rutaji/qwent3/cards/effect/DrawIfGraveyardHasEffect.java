@@ -1,7 +1,8 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;
 
 import java.util.Collections;
@@ -39,7 +40,7 @@ public final class DrawIfGraveyardHasEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        state.draw(owner, 1);
+    public void resolve(GameEngine engine, int owner, int target) {
+        engine.draw(owner, 1);
     }
 }

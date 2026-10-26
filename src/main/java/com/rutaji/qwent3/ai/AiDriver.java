@@ -1,9 +1,10 @@
 package com.rutaji.qwent3.ai;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Side;
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.gameLogic.Side;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 import com.rutaji.qwent3.cards.effect.Effect;
 import org.jspecify.annotations.Nullable;
 
@@ -22,7 +23,8 @@ public final class AiDriver {
     }
 
     /** Lets the AI act as long as the game waits for it. */
-    public static void run(GameState state, int side, QwentAi ai, String aiName, Logger logger) {
+    public static void run(GameEngine engine, int side, QwentAi ai, String aiName, Logger logger) {
+        GameState state = engine.state();
         for (int i = 0; i < MAX_ACTIONS && state.phase() != GameState.Phase.OVER && state.awaits(side); i++) {
             List<AiAction> legal = legalActions(state, side);
             if (legal.isEmpty()) {
@@ -41,7 +43,7 @@ public final class AiDriver {
                 }
                 action = fallback(legal);
             }
-            apply(state, side, action);
+            apply(engine, side, action);
         }
     }
 
@@ -126,14 +128,14 @@ public final class AiDriver {
         return legal.getFirst();
     }
 
-    private static void apply(GameState state, int side, AiAction action) {
+    private static void apply(GameEngine engine, int side, AiAction action) {
         switch (action) {
-            case AiAction.Redraw r -> state.clickHand(side, r.handIndex());
-            case AiAction.KeepHand k -> state.endMulligan(side);
-            case AiAction.Play p -> state.playCard(side, p.handIndex(), p.tile());
-            case AiAction.Pass p -> state.pass(side);
-            case AiAction.PickTile p -> state.clickTile(side, p.tile());
-            case AiAction.PickHand p -> state.clickHand(side, p.handIndex());
+            case AiAction.Redraw r -> engine.clickHand(side, r.handIndex());
+            case AiAction.KeepHand k -> engine.endMulligan(side);
+            case AiAction.Play p -> engine.playCard(side, p.handIndex(), p.tile());
+            case AiAction.Pass p -> engine.pass(side);
+            case AiAction.PickTile p -> engine.clickTile(side, p.tile());
+            case AiAction.PickHand p -> engine.clickHand(side, p.handIndex());
         }
     }
 }

@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 import net.kyori.adventure.text.Component;
 
 import java.util.Collections;
@@ -44,8 +45,8 @@ public final class BuffPerGraveyardCardEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        state.buff(state.tileOf(unit), perCard * count(state, owner));
+    public void resolve(GameEngine engine, int owner, int target) {
+        engine.buff(engine.state().tileOf(unit), perCard * count(engine.state(), owner));
     }
 
     private int count(GameState state, int owner) {

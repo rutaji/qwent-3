@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Pile;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import net.kyori.adventure.text.Component;
 
 import java.util.List;
@@ -41,10 +42,10 @@ public final class PlayRandomFromDeckEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
-        List<CardType> playable = playable(state, owner);
+    public void resolve(GameEngine engine, int owner, int target) {
+        List<CardType> playable = playable(engine.state(), owner);
         CardType card = playable.get(ThreadLocalRandom.current().nextInt(playable.size()));
-        state.queueNext(owner, new PlaceChosen(card));
+        engine.queueNext(owner, new PlaceChosen(card));
     }
 
     /** Monsters in the deck (one entry per copy) that have at least one tile they can be played on. */
@@ -87,9 +88,9 @@ public final class PlayRandomFromDeckEffect implements Effect {
         }
 
         @Override
-        public void resolve(GameState state, int owner, int target) {
-            if (state.removeFromPile(owner, Pile.DECK, card)) {
-                state.play(owner, card, target);
+        public void resolve(GameEngine engine, int owner, int target) {
+            if (engine.removeFromPile(owner, Pile.DECK, card)) {
+                engine.play(owner, card, target);
             }
         }
     }

@@ -1,8 +1,9 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.GameState;
-import com.rutaji.qwent3.cards.Unit;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
+import com.rutaji.qwent3.cards.gameLogic.Unit;
 import net.kyori.adventure.text.Component;
 import org.jspecify.annotations.Nullable;
 
@@ -62,10 +63,10 @@ public final class FillRowEffect implements Effect {
     }
 
     @Override
-    public void resolve(GameState state, int owner, int target) {
+    public void resolve(GameEngine engine, int owner, int target) {
         for (int tile : rowTiles(owner)) {
-            if (state.canPlay(owner, card, tile)) {
-                state.play(owner, card, tile);
+            if (engine.state().canPlay(owner, card, tile)) {
+                engine.play(owner, card, tile);
             }
         }
     }
