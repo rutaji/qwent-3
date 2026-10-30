@@ -3,6 +3,7 @@ package com.rutaji.qwent3.cards.gameLogic;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import com.rutaji.qwent3.cards.effect.Effect;
+import com.rutaji.qwent3.cards.effect.effectTargets.filters.CardFilter;
 import com.rutaji.qwent3.cards.gameLogic.GameState.LogEntry;
 import com.rutaji.qwent3.cards.gameLogic.GameState.Phase;
 import com.rutaji.qwent3.cards.gameLogic.GameState.QueuedEffect;
@@ -451,35 +452,30 @@ public final class GameEngine {
 
     /** Draws cards from the top of the deck. With a full hand the card is discarded to the graveyard. */
     public void draw(int side, int count) {
+        draw(side, count, null);
+    }
+
+    /**
+     * Draws the top-most deck cards that match, one at a time (with a full hand the card goes to the graveyard);
+     * null = any card. Returns how many were drawn: fewer than {@code count} if the deck runs out of such cards.
+     */
+    public int draw(int side, int count, @Nullable CardFilter filter) {
         Side s = state.sides[side];
-        for (int i = 0; i < count && !s.deck.isEmpty(); i++) {
-            CardType card = s.deck.remove(0);
+        int drawn = 0;
+        for (int i = 0; i < s.deck.size() && drawn < count; ) {
+            if (filter != null && !filter.check(s.deck.get(i))) {
+                i++;
+                continue;
+            }
+            CardType card = s.deck.remove(i);
             if (s.hand.size() >= MAX_HAND) {
                 s.graveyard.add(card);
             } else {
                 s.hand.add(card);
             }
+            drawn++;
         }
-    }
-
-    /**
-     * Draws the top-most deck card that matches (with a full hand it goes to the graveyard).
-     * False if the deck has no such card.
-     */
-    public boolean drawFirst(int side, Predicate<CardType> filter) {
-        Side s = state.sides[side];
-        for (int i = 0; i < s.deck.size(); i++) {
-            if (filter.test(s.deck.get(i))) {
-                CardType card = s.deck.remove(i);
-                if (s.hand.size() >= MAX_HAND) {
-                    s.graveyard.add(card);
-                } else {
-                    s.hand.add(card);
-                }
-                return true;
-            }
-        }
-        return false;
+        return drawn;
     }
 
     /** Draws the top card of {@code deckSide}'s deck into {@code toSide}'s hand (full hand: their graveyard). */

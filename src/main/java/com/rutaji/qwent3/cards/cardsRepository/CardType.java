@@ -1,27 +1,24 @@
 package com.rutaji.qwent3.cards.cardsRepository;
 
+import com.rutaji.qwent3.cards.effect.AddPowerEffect;
 import com.rutaji.qwent3.cards.effect.AdjacentDamageEffect;
 import com.rutaji.qwent3.cards.effect.AddToDeckEffect;
 import com.rutaji.qwent3.cards.effect.AdjacentDestroyEffect;
 import com.rutaji.qwent3.cards.effect.BanishToBuffSelfEffect;
 import com.rutaji.qwent3.cards.effect.BanishToDamageEffect;
 import com.rutaji.qwent3.cards.effect.BanishToSummonEffect;
-import com.rutaji.qwent3.cards.effect.BuffEffect;
 import com.rutaji.qwent3.cards.effect.BuffPerGraveyardCardEffect;
 import com.rutaji.qwent3.cards.effect.ColumnDestroyEffect;
 import com.rutaji.qwent3.cards.effect.CopyToPileEffect;
-import com.rutaji.qwent3.cards.effect.DamageEffect;
 import com.rutaji.qwent3.cards.effect.DestroyExtremeEffect;
 import com.rutaji.qwent3.cards.effect.DiscardEffect;
 import com.rutaji.qwent3.cards.effect.DiscardFromDeckEffect;
-import com.rutaji.qwent3.cards.effect.DiscardThenEffect;
-import com.rutaji.qwent3.cards.effect.DiscardToDrawCardsEffect;
-import com.rutaji.qwent3.cards.effect.DiscardToDrawEffect;
+import com.rutaji.qwent3.cards.effect.DrawEffect;
 import com.rutaji.qwent3.cards.effect.DrawIfGraveyardHasEffect;
 import com.rutaji.qwent3.cards.effect.DrawFromOpponentDeckEffect;
 import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.effect.FillRowEffect;
-import com.rutaji.qwent3.cards.effect.IfOnEnemySideEffect;
+import com.rutaji.qwent3.cards.effect.IfEffect;
 import com.rutaji.qwent3.cards.effect.MassEffect;
 import com.rutaji.qwent3.cards.effect.MirrorEffect;
 import com.rutaji.qwent3.cards.effect.PlayFromPileEffect;
@@ -31,8 +28,8 @@ import com.rutaji.qwent3.cards.effect.SetPowerEffect;
 import com.rutaji.qwent3.cards.effect.ShiftEffect;
 import com.rutaji.qwent3.cards.effect.SummonEffect;
 import com.rutaji.qwent3.cards.effect.SwapDeckAndGraveyardEffect;
-import com.rutaji.qwent3.cards.effect.SwapKindDrawEffect;
 import com.rutaji.qwent3.cards.effect.Targets;
+import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterKind;
 import com.rutaji.qwent3.cards.gameLogic.Unit;
 import org.jspecify.annotations.Nullable;
 
@@ -53,7 +50,7 @@ public enum CardType {
     ARROW(Kind.SPELL, "Arrow", 0, "Ar", "Deal 4 damage to a monster.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DamageEffect(this, 4));
+            return List.of(new AddPowerEffect(this, -4));
         }
     },
     TWO_ARROWS(Kind.SPELL, "Two Arrows", 0, "2A", "Deal 4 damage to two different monsters.") {
@@ -61,7 +58,8 @@ public enum CardType {
         public List<Effect> onPlay(@Nullable Unit self) {
             // Shared set: the second arrow cannot hit the first one's target (cancelled if no other monster).
             Set<Unit> hit = new HashSet<>();
-            return List.of(new DamageEffect(this, 4, hit), new DamageEffect(this, 4, hit));
+            return List.of(new AddPowerEffect(this, -4, Targets.ANY, true, hit),
+                    new AddPowerEffect(this, -4, Targets.ANY, true, hit));
         }
     },
     GRAVEL(Kind.SPELL, "Gravel", 0, "Gr", "Destroy the lowest power monsters (all of them if tied).") {
@@ -79,14 +77,14 @@ public enum CardType {
     SKELETON(Kind.MONSTER, "Skeleton", 4, "Sk", "On play: deal 3 damage to a monster.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DamageEffect(this, 3));
+            return List.of(new AddPowerEffect(this, -3));
         }
     },
     EVIL_GOBLIN(Kind.MONSTER, "Evil Goblin", 8, "EG", "No effect."),
     BOAR(Kind.MONSTER, "Boar", 4, "Bo", "On play: deal 1 damage to a monster.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DamageEffect(this, 1));
+            return List.of(new AddPowerEffect(this, -1));
         }
     },
     BEAR(Kind.MONSTER, "Bear", 7, "Be", "No effect."),
@@ -114,20 +112,21 @@ public enum CardType {
     DESERT_ZOMBIE(Kind.MONSTER, "Desert Zombie", 5, "DZ", "On play: deal 2 damage to a monster.", Tag.ZOMBIE) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DamageEffect(this, 2));
+            return List.of(new AddPowerEffect(this, -2));
         }
     },
     ZOMBIE_LIBRARIAN(Kind.MONSTER, "Zombie Librarian", 5, "ZL",
             "On play: discard a Zombie card from your hand to draw a spell.", Tag.ZOMBIE) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardToDrawEffect(this, Tag.ZOMBIE));
+            return List.of(new DiscardEffect(this, Tag.ZOMBIE).then(
+                    new DrawEffect(this, 1, new FilterKind(Kind.SPELL))));
         }
     },
     BLAZE(Kind.MONSTER, "Blaze", 4, "Bl", "On play: deal 1 damage to a monster, twice (can be the same one).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DamageEffect(this, 1), new DamageEffect(this, 1));
+            return List.of(new AddPowerEffect(this, -1), new AddPowerEffect(this, -1));
         }
     },
     CACTUS(Kind.MONSTER, "Cactus", 7, "Ca", "On play: deal 1 damage to the monsters left and right of it.",
@@ -149,7 +148,7 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return self == null ? List.of()
-                    : List.of(new IfOnEnemySideEffect(this, self, new DrawFromOpponentDeckEffect(this)));
+                    : List.of(IfEffect.onEnemySide(this, self, new DrawFromOpponentDeckEffect(this)));
         }
     },
     CREEPER(Kind.MONSTER, "Creeper", 6, "Cr", "On death: destroy the monsters left and right of it.",
@@ -187,7 +186,7 @@ public enum CardType {
     FERTILIZING(Kind.SPELL, "Fertilizing", 0, "Fe", "Discard 2 cards to draw 2 cards.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardToDrawCardsEffect(this, 2, 2));
+            return List.of(new DiscardEffect(this, 2).then(new DrawEffect(this, 2)));
         }
     },
     FARMER(Kind.MONSTER, "Farmer", 4, "Fa", "On play: banish a random Plant from your graveyard to play a Farmer.") {
@@ -254,7 +253,7 @@ public enum CardType {
             "Discard a card to pull a monster one row towards you (monsters in the way are pushed along).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardThenEffect(this, ShiftEffect.pull(this)));
+            return List.of(new DiscardEffect(this).then(ShiftEffect.pull(this)));
         }
     },
     DRUNK_BRAWLER(Kind.MONSTER, "Drunk Brawler", 3, "DB", "When damaged and survives: summon a Drunk Brawler.") {
@@ -267,7 +266,8 @@ public enum CardType {
             "On play: discard a monster to draw a spell, or a spell to draw a monster.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new SwapKindDrawEffect(this));
+            return List.of(new DiscardEffect(this).thenWith(card -> List.of(
+                    new DrawEffect(this, 1, new FilterKind(card.isMonster() ? Kind.SPELL : Kind.MONSTER)))));
         }
     },
     SWARM(Kind.SPELL, "Swarm", 0, "Sm", "Play 3 Silverfish.") {
@@ -292,7 +292,7 @@ public enum CardType {
     BEE(Kind.MONSTER, "Bee", 5, "Bee", "On play: give a monster +2 power.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new BuffEffect(this, 2));
+            return List.of(new AddPowerEffect(this, 2));
         }
     },
     HEALER(Kind.MONSTER, "Healer", 6, "He", "On play: set the power of one of your monsters to 5.") {
@@ -310,13 +310,13 @@ public enum CardType {
     BARD(Kind.MONSTER, "Bard", 3, "Bd", "On play: give a monster +1 power, twice (can be the same one).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new BuffEffect(this, 1), new BuffEffect(this, 1));
+            return List.of(new AddPowerEffect(this, 1), new AddPowerEffect(this, 1));
         }
     },
     WARLOCK(Kind.MONSTER, "Warlock", 9, "Wl", "On play: give an enemy monster +2 power.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new BuffEffect(this, 2, Targets.ENEMY));
+            return List.of(new AddPowerEffect(this, 2, Targets.ENEMY));
         }
     },
     MUSIC_DISC(Kind.SPELL, "Music Disc", 0, "MD",
@@ -337,17 +337,17 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             Set<Unit> hit = new HashSet<>();
-            return List.of(new DiscardThenEffect(this,
-                    new DamageEffect(this, 4, hit, Targets.ENEMY),
-                    new DamageEffect(this, 4, hit, Targets.ENEMY),
-                    new DamageEffect(this, 4, hit, Targets.ENEMY)));
+            return List.of(new DiscardEffect(this).then(
+                    new AddPowerEffect(this, -4, Targets.ENEMY, true, hit),
+                    new AddPowerEffect(this, -4, Targets.ENEMY, true, hit),
+                    new AddPowerEffect(this, -4, Targets.ENEMY, true, hit)));
         }
     },
     ENDERMITE(Kind.MONSTER, "Endermite", 2, "Et",
             "On play: discard a card to play 2 random monsters from your deck.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardThenEffect(this,
+            return List.of(new DiscardEffect(this).then(
                     new PlayRandomFromDeckEffect(this), new PlayRandomFromDeckEffect(this)));
         }
     },
@@ -360,7 +360,7 @@ public enum CardType {
     SUMMON_ENDER_DRAGON(Kind.SPELL, "Summon Ender Dragon", 0, "SE", "Discard 4 cards to play an Ender Dragon.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardThenEffect(this, 4, new SummonEffect(this, ENDER_DRAGON)));
+            return List.of(new DiscardEffect(this, 4).then(new SummonEffect(this, ENDER_DRAGON)));
         }
     },
     MIRROR(Kind.SPELL, "Mirror", 0, "Mi",
@@ -370,6 +370,8 @@ public enum CardType {
             return List.of(new MirrorEffect(this));
         }
     };
+
+
 
     public enum Kind {
         /** Has power and is placed on an empty tile. */
@@ -457,6 +459,14 @@ public enum CardType {
 
     public boolean hasTag(Tag tag) {
         return tags.contains(tag);
+    }
+    public boolean hasTag(Set<Tag> tags) {
+        for(Tag t : tags){
+            if(tags.contains(t)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public Set<Keyword> keywords() {

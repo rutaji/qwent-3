@@ -64,4 +64,9 @@ public interface Effect {
      * is false.
      */
     void resolve(GameEngine engine, int owner, int target);
+
+    /** This, then the other effects (in order); see {@link ToEffect}. */
+    default Effect then(Effect... next) {
+        return new ToEffect(this, next);
+    }
 }
