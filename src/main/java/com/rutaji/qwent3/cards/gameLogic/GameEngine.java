@@ -452,45 +452,39 @@ public final class GameEngine {
 
     /** Draws cards from the top of the deck. With a full hand the card is discarded to the graveyard. */
     public void draw(int side, int count) {
-        draw(side, count, null);
+        draw(side, count, null, side, Pile.DECK);
     }
 
     /**
-     * Draws the top-most deck cards that match, one at a time (with a full hand the card goes to the graveyard);
-     * null = any card. Returns how many were drawn: fewer than {@code count} if the deck runs out of such cards.
+     * {@code side} draws the top-most matching cards of {@code pileSide}'s deck or graveyard (the graveyard's top is
+     * the card that entered it last), one at a time; null filter = any card. With a full hand the card goes to
+     * {@code side}'s graveyard. Returns how many were drawn: fewer than {@code count} if the pile runs out of such
+     * cards.
      */
-    public int draw(int side, int count, @Nullable CardFilter filter) {
-        Side s = state.sides[side];
+    public int draw(int side, int count, @Nullable CardFilter filter, int pileSide, Pile pile) {
+        List<CardType> from = state.sides[pileSide].pile(pile);
+        Side to = state.sides[side];
+        boolean fromEnd = pile == Pile.GRAVEYARD;
         int drawn = 0;
-        for (int i = 0; i < s.deck.size() && drawn < count; ) {
-            if (filter != null && !filter.check(s.deck.get(i))) {
-                i++;
+        for (int n = 0; n < from.size() && drawn < count; ) {
+            if (from == to.graveyard && to.hand.size() >= MAX_HAND) {
+                // It would go straight back on top of the same graveyard.
+                break;
+            }
+            int i = fromEnd ? from.size() - 1 - n : n;
+            if (filter != null && !filter.check(from.get(i))) {
+                n++;
                 continue;
             }
-            CardType card = s.deck.remove(i);
-            if (s.hand.size() >= MAX_HAND) {
-                s.graveyard.add(card);
+            CardType card = from.remove(i);
+            if (to.hand.size() >= MAX_HAND) {
+                to.graveyard.add(card);
             } else {
-                s.hand.add(card);
+                to.hand.add(card);
             }
             drawn++;
         }
         return drawn;
-    }
-
-    /** Draws the top card of {@code deckSide}'s deck into {@code toSide}'s hand (full hand: their graveyard). */
-    public void drawFromDeckOf(int deckSide, int toSide) {
-        Side from = state.sides[deckSide];
-        if (from.deck.isEmpty()) {
-            return;
-        }
-        CardType card = from.deck.remove(0);
-        Side to = state.sides[toSide];
-        if (to.hand.size() >= MAX_HAND) {
-            to.graveyard.add(card);
-        } else {
-            to.hand.add(card);
-        }
     }
 
     /** Moves a hand card to the graveyard. */

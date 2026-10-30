@@ -15,7 +15,6 @@ import com.rutaji.qwent3.cards.effect.DiscardEffect;
 import com.rutaji.qwent3.cards.effect.DiscardFromDeckEffect;
 import com.rutaji.qwent3.cards.effect.DrawEffect;
 import com.rutaji.qwent3.cards.effect.DrawIfGraveyardHasEffect;
-import com.rutaji.qwent3.cards.effect.DrawFromOpponentDeckEffect;
 import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.effect.FillRowEffect;
 import com.rutaji.qwent3.cards.effect.IfEffect;
@@ -29,6 +28,8 @@ import com.rutaji.qwent3.cards.effect.ShiftEffect;
 import com.rutaji.qwent3.cards.effect.SummonEffect;
 import com.rutaji.qwent3.cards.effect.SwapDeckAndGraveyardEffect;
 import com.rutaji.qwent3.cards.effect.Targets;
+import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
+import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterKind;
 import com.rutaji.qwent3.cards.gameLogic.Unit;
 import org.jspecify.annotations.Nullable;
@@ -148,7 +149,8 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return self == null ? List.of()
-                    : List.of(IfEffect.onEnemySide(this, self, new DrawFromOpponentDeckEffect(this)));
+                    : List.of(IfEffect.onEnemySide(this, self,
+                            new DrawEffect(this, 1, null, SideTarget.Owner, Pack.Deck, SideTarget.Opponent)));
         }
     },
     CREEPER(Kind.MONSTER, "Creeper", 6, "Cr", "On death: destroy the monsters left and right of it.",
