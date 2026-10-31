@@ -4,13 +4,15 @@ import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.effect.board.factory.Act;
 import com.rutaji.qwent3.cards.effect.board.AreaEffect;
 import com.rutaji.qwent3.cards.effect.board.MoveEffect;
+import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterPower;
+import com.rutaji.qwent3.cards.effect.board.BoardCount;
 import com.rutaji.qwent3.cards.effect.board.factory.Pick;
 import com.rutaji.qwent3.cards.effect.board.PickUnitEffect;
 import com.rutaji.qwent3.cards.effect.board.factory.Select;
 import com.rutaji.qwent3.cards.effect.combinator.IfEffect;
 import com.rutaji.qwent3.cards.effect.pile.AddToPackEffect;
 import com.rutaji.qwent3.cards.effect.pile.BanishEffect;
-import com.rutaji.qwent3.cards.effect.pile.CountEffect;
+import com.rutaji.qwent3.cards.effect.combinator.CountEffect;
 import com.rutaji.qwent3.cards.effect.pile.DiscardEffect;
 import com.rutaji.qwent3.cards.effect.pile.DrawEffect;
 import com.rutaji.qwent3.cards.effect.pile.MoveBetweenPacksEffect;
@@ -325,11 +327,11 @@ public enum CardType {
         }
     },
     MUSIC_DISC(Kind.SPELL, "Music Disc", 0, "MD",
-            "If your graveyard has at least 2 Music Discs (this one counts), draw a card.") {
+            "If your graveyard has at least 3 Music Discs (this one counts), draw a card.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new IfEffect(this, PileCount.graveyard(MUSIC_DISC).atLeast(2),
-                    "at least 2 Music Discs in your graveyard", new DrawEffect(this, 1)));
+            return List.of(new IfEffect(this, PileCount.graveyard(MUSIC_DISC).atLeast(3),
+                    "at least 3 Music Discs in your graveyard", new DrawEffect(this, 1)));
         }
     },
     ENDERMAN(Kind.MONSTER, "Enderman", 14, "En", "On play: discard a card.") {
@@ -375,6 +377,28 @@ public enum CardType {
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PlayFromPileEffect(this, new FilterKind(Kind.SPELL), "the last spell", 1,
                     SideTarget.Opponent, Pack.Graveyard, false));
+        }
+    },
+    DARTY(Kind.MONSTER, "Darty", 2, "Da",
+            "On play: if it is directly right of a Piddy, +2 power for every monster with 1 power.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return self == null ? List.of()
+                    : List.of(new IfEffect(this, (state, owner) -> state.isDirectlyRightOf(self, PIDDY),
+                            "directly right of a Piddy",
+                            new CountEffect(this, new BoardCount(new FilterPower(power -> power == 1), Targets.ANY),
+                                    "+2 power for every monster with 1 power").thenWith(n -> List.of(
+                                    new AreaEffect(this, Select.self(self), Act.addPower(2 * n),
+                                            "+" + 2 * n + " power")))));
+        }
+    },
+    PIDDY(Kind.MONSTER, "Piddy", 2, "Pd", "On play: if it is directly left of a Darty, move a monster 1 row back.") {
+        @Override
+        public List<Effect> onPlay(@Nullable Unit self) {
+            return self == null ? List.of()
+                    : List.of(new IfEffect(this, (state, owner) -> state.isDirectlyLeftOf(self, DARTY),
+                            "directly left of a Darty",
+                            new MoveEffect(this, Direction.Back, 1, true)));
         }
     };
 

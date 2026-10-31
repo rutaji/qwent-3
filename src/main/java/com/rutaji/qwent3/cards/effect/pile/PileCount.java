@@ -1,5 +1,7 @@
 package com.rutaji.qwent3.cards.effect.pile;
 
+import com.rutaji.qwent3.cards.effect.Count;
+import com.rutaji.qwent3.cards.effect.combinator.CountEffect;
 import com.rutaji.qwent3.cards.effect.combinator.IfEffect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
@@ -10,14 +12,13 @@ import com.rutaji.qwent3.cards.gameLogic.GameState;
 import com.rutaji.qwent3.cards.gameLogic.Side;
 import org.jspecify.annotations.Nullable;
 
-import java.util.function.BiPredicate;
 
 /**
  * Counts the matching cards in a deck or graveyard ({@code pack}) of a side ({@code side}, seen from the effect's
  * owner), e.g. "every Potato in your graveyard". Use it with {@link CountEffect} or, via {@link #atLeast},
  * {@link IfEffect}.
  */
-public final class PileCount {
+public final class PileCount implements Count {
     /** Null = any card. */
     private final @Nullable CardFilter filter;
     private final Pack pack;
@@ -34,6 +35,7 @@ public final class PileCount {
         return new PileCount(new FilterCard(card), Pack.Graveyard, SideTarget.Owner);
     }
 
+    @Override
     public int count(GameState state, int owner) {
         Side s = state.side(side == SideTarget.Owner ? owner : GameState.other(owner));
         int count = 0;
@@ -43,10 +45,5 @@ public final class PileCount {
             }
         }
         return count;
-    }
-
-    /** A condition for {@link IfEffect}: at least {@code n} such cards. */
-    public BiPredicate<GameState, Integer> atLeast(int n) {
-        return (state, owner) -> count(state, owner) >= n;
     }
 }

@@ -209,6 +209,33 @@ public final class GameState {
         return -1;
     }
 
+    /**
+     * Whether the unit is on the board and the tile directly to its right (same row) holds a monster of the card,
+     * whoever owns it. Column 0 is on the left for both players.
+     */
+    public boolean isDirectlyLeftOf(Unit unit, CardType card) {
+        return neighbourIs(unit, 1, card);
+    }
+
+    /** Whether the unit is on the board and the tile directly to its left (same row) holds a monster of the card. */
+    public boolean isDirectlyRightOf(Unit unit, CardType card) {
+        return neighbourIs(unit, -1, card);
+    }
+
+    /** Whether the tile {@code columnStep} columns from the unit, in the same row, holds a monster of the card. */
+    private boolean neighbourIs(Unit unit, int columnStep, CardType card) {
+        int tile = tileOf(unit);
+        if (tile < 0) {
+            return false;
+        }
+        int column = tile % COLUMNS + columnStep;
+        if (column < 0 || column >= COLUMNS) {
+            return false;
+        }
+        Unit neighbour = board[tile + columnStep];
+        return neighbour != null && neighbour.type() == card;
+    }
+
     /** Whether {@code player} may put this monster on the tile: empty, and their side (or either, if treacherous). */
     public boolean canPlay(int player, CardType monster, int tile) {
         return monster.isMonster() && tile >= 0 && tile < BOARD_SIZE && board[tile] == null

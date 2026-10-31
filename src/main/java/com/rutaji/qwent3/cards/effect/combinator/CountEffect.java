@@ -1,5 +1,6 @@
-package com.rutaji.qwent3.cards.effect.pile;
+package com.rutaji.qwent3.cards.effect.combinator;
 
+import com.rutaji.qwent3.cards.effect.Count;
 import com.rutaji.qwent3.cards.effect.ResultEffect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
@@ -13,11 +14,11 @@ import org.jspecify.annotations.Nullable;
  */
 public final class CountEffect implements ResultEffect<Integer> {
     private final CardType source;
-    private final PileCount count;
+    private final Count count;
     private final String text;
 
     /** @param text the whole effect for the description, e.g. "+3 power for every Potato in your graveyard" */
-    public CountEffect(CardType source, PileCount count, String text) {
+    public CountEffect(CardType source, Count count, String text) {
         this.source = source;
         this.count = count;
         this.text = text;

@@ -116,4 +116,49 @@ class BuffCardsTest {
         assertEquals(3, power(engine, t(0, 0, 0)));
         assertEquals(5, BEE.power(), "base power unchanged");
     }
+
+    @Test
+    void dartyRightOfPiddyGets2PerOnePowerMonster() {
+        GameEngine engine = game(List.of(PIDDY, DARTY), List.of(BEAR), 0);
+        engine.play(0, SILVERFISH, t(0, 1, 0));
+        engine.play(0, BEETROOT, t(1, 1, 4));     // treacherous on side 1: still a 1-power monster on the board
+        play(engine, 0, PIDDY, t(0, 0, 1));       // no Darty on its right: its move is cancelled
+        engine.pass(1);
+        play(engine, 0, DARTY, t(0, 0, 2));
+        assertEquals(6, power(engine, t(0, 0, 2)), "2 + 2 x 2 monsters with 1 power (both sides)");
+    }
+
+    @Test
+    void dartyCountsCurrentPowerNotBasePower() {
+        GameEngine engine = game(List.of(PIDDY, DARTY), List.of(BEAR), 0);
+        engine.play(0, BASIC_ZOMBIE, t(0, 1, 0));
+        engine.damage(t(0, 1, 0), 1);             // Basic Zombie 2 -> 1
+        engine.play(0, SILVERFISH, t(0, 1, 1));
+        engine.buff(t(0, 1, 1), 1);               // Silverfish 1 -> 2
+        play(engine, 0, PIDDY, t(0, 0, 1));
+        engine.pass(1);
+        play(engine, 0, DARTY, t(0, 0, 2));
+        assertEquals(4, power(engine, t(0, 0, 2)), "only the damaged Basic Zombie has 1 power now");
+    }
+
+    @Test
+    void dartyWithoutPiddyOnItsLeftDoesNothing() {
+        GameEngine engine = game(List.of(PIDDY, DARTY), List.of(BEAR), 0);
+        engine.play(0, SILVERFISH, t(0, 1, 0));
+        play(engine, 0, PIDDY, t(0, 0, 3));       // Piddy on the right, not the left
+        engine.pass(1);
+        play(engine, 0, DARTY, t(0, 0, 2));
+        assertEquals(2, power(engine, t(0, 0, 2)));
+        assertTrue(engine.state().log().getLast().text().endsWith("- no target"));
+    }
+
+    @Test
+    void dartyWithNoOnePowerMonstersStaysAt2() {
+        GameEngine engine = game(List.of(PIDDY, DARTY), List.of(BEAR), 0);
+        play(engine, 0, PIDDY, t(0, 0, 1));
+        engine.pass(1);
+        play(engine, 0, DARTY, t(0, 0, 2));
+        assertEquals(2, power(engine, t(0, 0, 2)));
+        assertNull(engine.state().pendingEffect());
+    }
 }

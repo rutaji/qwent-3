@@ -103,13 +103,15 @@ class PileCardsTest {
     }
 
     @Test
-    void musicDiscDrawsWithTwoDiscsInGraveyardThisOneCounts() {
-        GameEngine engine = withDecks(List.of(MUSIC_DISC, MUSIC_DISC, BEAR), 2, List.of(BEAR, BEAR), 2, 0);
+    void musicDiscDrawsWithThreeDiscsInGraveyardThisOneCounts() {
+        GameEngine engine = withDecks(List.of(MUSIC_DISC, MUSIC_DISC, MUSIC_DISC, BEAR), 3, List.of(BEAR, BEAR), 2, 0);
         play(engine, 0, MUSIC_DISC, t(0, 0, 0));
-        assertEquals(1, engine.state().side(0).handSize(), "only 1 disc in graveyard: no draw");
+        assertEquals(2, engine.state().side(0).handSize(), "1 disc in graveyard: no draw");
         engine.pass(1);
         play(engine, 0, MUSIC_DISC, t(0, 0, 0));
-        assertEquals(List.of(BEAR), List.of(engine.state().side(0).handCard(0)));
+        assertEquals(1, engine.state().side(0).handSize(), "2 discs in graveyard: no draw");
+        play(engine, 0, MUSIC_DISC, t(0, 0, 0));
+        assertEquals(List.of(BEAR), List.of(engine.state().side(0).handCard(0)), "3 discs: drew the Bear");
     }
 
     @Test

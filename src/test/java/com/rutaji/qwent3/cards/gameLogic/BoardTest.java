@@ -89,4 +89,30 @@ class BoardTest {
         assertEquals(-1, engine.state().tileOf(bear));
         assertEquals(t(0, 1, 3), bear.tile(), "a dead unit still knows where it died");
     }
+
+    @Test
+    void directlyLeftAndRightChecksStayInTheRow() {
+        GameEngine engine = game(List.of(BEAR), List.of(BEAR), 0);
+        engine.play(0, PIDDY, t(0, 0, 4));
+        engine.play(0, DARTY, t(0, 1, 0));        // next tile index, but the next row
+        Unit piddy = engine.state().unit(t(0, 0, 4));
+        Unit darty = engine.state().unit(t(0, 1, 0));
+        assertFalse(engine.state().isDirectlyLeftOf(piddy, DARTY), "right edge: nothing to its right");
+        assertFalse(engine.state().isDirectlyRightOf(darty, PIDDY), "left edge: nothing to its left");
+
+        engine.play(0, DARTY, t(0, 0, 3));
+        assertFalse(engine.state().isDirectlyLeftOf(piddy, DARTY));
+        assertTrue(engine.state().isDirectlyRightOf(piddy, DARTY), "Piddy at column 4 is right of Darty at 3");
+        assertTrue(engine.state().isDirectlyLeftOf(engine.state().unit(t(0, 0, 3)), PIDDY));
+    }
+
+    @Test
+    void neighbourChecksAreFalseForUnitsNotOnTheBoard() {
+        GameEngine engine = game(List.of(BEAR), List.of(BEAR), 0);
+        engine.play(0, PIDDY, t(0, 0, 1));
+        engine.play(0, DARTY, t(0, 0, 2));
+        Unit piddy = engine.state().unit(t(0, 0, 1));
+        engine.destroy(t(0, 0, 1));
+        assertFalse(engine.state().isDirectlyLeftOf(piddy, DARTY));
+    }
 }
