@@ -10,18 +10,17 @@ import com.rutaji.qwent3.cards.effect.board.factory.Pick;
 import com.rutaji.qwent3.cards.effect.board.PickUnitEffect;
 import com.rutaji.qwent3.cards.effect.board.factory.Select;
 import com.rutaji.qwent3.cards.effect.combinator.IfEffect;
-import com.rutaji.qwent3.cards.effect.pile.AddToPackEffect;
+import com.rutaji.qwent3.cards.effect.pile.AddToPileEffect;
 import com.rutaji.qwent3.cards.effect.pile.BanishEffect;
 import com.rutaji.qwent3.cards.effect.combinator.CountEffect;
 import com.rutaji.qwent3.cards.effect.pile.DiscardEffect;
 import com.rutaji.qwent3.cards.effect.pile.DrawEffect;
-import com.rutaji.qwent3.cards.effect.pile.MoveBetweenPacksEffect;
+import com.rutaji.qwent3.cards.effect.pile.MoveBetweenPilesEffect;
 import com.rutaji.qwent3.cards.effect.pile.PileCount;
 import com.rutaji.qwent3.cards.effect.pile.PlayFromPileEffect;
 import com.rutaji.qwent3.cards.effect.pile.SwapPileEffect;
 import com.rutaji.qwent3.cards.effect.effectTargets.Targets;
 import com.rutaji.qwent3.cards.effect.effectTargets.Direction;
-import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
 import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterCard;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterKind;
@@ -95,7 +94,7 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PlayFromPileEffect(this, new FilterCard(BASIC_ZOMBIE), "every Basic Zombie",
-                    PlayFromPileEffect.ALL, SideTarget.Owner, Pack.Deck, false));
+                    PlayFromPileEffect.ALL, SideTarget.Owner, Pile.DECK, false));
         }
     },
     ZOMBIE_AWAKENING(Kind.SPELL, "Zombie Awakening", 0, "ZA", "Play all Basic Zombies from your graveyard.",
@@ -103,7 +102,7 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PlayFromPileEffect(this, new FilterCard(BASIC_ZOMBIE), "every Basic Zombie",
-                    PlayFromPileEffect.ALL, SideTarget.Owner, Pack.Graveyard, false));
+                    PlayFromPileEffect.ALL, SideTarget.Owner, Pile.GRAVEYARD, false));
         }
     },
     DESERT_ZOMBIE(Kind.MONSTER, "Desert Zombie", 5, "DZ", "On play: deal 2 damage to a monster.", Tag.ZOMBIE) {
@@ -146,7 +145,7 @@ public enum CardType {
         public List<Effect> onPlay(@Nullable Unit self) {
             return self == null ? List.of()
                     : List.of(IfEffect.onEnemySide(this, self,
-                            new DrawEffect(this, 1, null, SideTarget.Owner, Pack.Deck, SideTarget.Opponent)));
+                            new DrawEffect(this, 1, null, SideTarget.Owner, Pile.DECK, SideTarget.Opponent)));
         }
     },
     CREEPER(Kind.MONSTER, "Creeper", 6, "Cr", "On death: destroy the monsters left and right of it.",
@@ -161,7 +160,7 @@ public enum CardType {
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PickUnitEffect(this, Targets.ANY, null, "put 3 copies of a monster into your deck")
                     .thenWith(unit -> List.of(
-                            new AddToPackEffect(this, unit.type(), 3, SideTarget.Owner, Pack.Deck, false))));
+                            new AddToPileEffect(this, unit.type(), 3, SideTarget.Owner, Pile.DECK, false))));
         }
     },
     GOLD_HOE(Kind.SPELL, "Gold Hoe", 0, "GH", "Put 3 copies of a monster on the board into your graveyard.") {
@@ -169,7 +168,7 @@ public enum CardType {
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PickUnitEffect(this, Targets.ANY, null, "put 3 copies of a monster into your graveyard")
                     .thenWith(unit -> List.of(
-                            new AddToPackEffect(this, unit.type(), 3, SideTarget.Owner, Pack.Graveyard, true))));
+                            new AddToPileEffect(this, unit.type(), 3, SideTarget.Owner, Pile.GRAVEYARD, true))));
         }
     },
     WOODEN_HOE(Kind.SPELL, "Wooden Hoe", 0, "WH",
@@ -219,21 +218,21 @@ public enum CardType {
             "On play: discard every Brown Mushroom from your deck.", Tag.PLANT) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new MoveBetweenPacksEffect(this, new FilterCard(BROWN_MUSHROOM), "every Brown Mushroom",
-                    SideTarget.Owner, Pack.Deck, SideTarget.Owner, Pack.Graveyard, true));
+            return List.of(new MoveBetweenPilesEffect(this, new FilterCard(BROWN_MUSHROOM), "every Brown Mushroom",
+                    SideTarget.Owner, Pile.DECK, SideTarget.Owner, Pile.GRAVEYARD, true));
         }
     },
     WEEDS(Kind.MONSTER, "Weeds", 2, "We", "When your opponent casts a spell: put a Weeds on top of their deck.",
             Set.of(Keyword.TREACHEROUS)) {
         @Override
         public List<Effect> onOpponentSpell(Unit self) {
-            return List.of(new AddToPackEffect(this, WEEDS, 1, SideTarget.Opponent, Pack.Deck, true));
+            return List.of(new AddToPileEffect(this, WEEDS, 1, SideTarget.Opponent, Pile.DECK, true));
         }
     },
     SWITCHAROO(Kind.SPELL, "Switcharoo", 0, "Sw", "Swap your deck and your graveyard (no shuffling).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new SwapPileEffect(this, SideTarget.Owner, Pack.Deck, SideTarget.Owner, Pack.Graveyard));
+            return List.of(new SwapPileEffect(this, SideTarget.Owner, Pile.DECK, SideTarget.Owner, Pile.GRAVEYARD));
         }
     },
     SILVERFISH(Kind.MONSTER, "Silverfish", 1, "Si", "No effect."),
@@ -247,7 +246,7 @@ public enum CardType {
     INFESTATION(Kind.SPELL, "Infestation", 0, "In", "Shuffle 4 Silverfish into your opponent's deck.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new AddToPackEffect(this, SILVERFISH, 4, SideTarget.Opponent, Pack.Deck, false));
+            return List.of(new AddToPileEffect(this, SILVERFISH, 4, SideTarget.Opponent, Pile.DECK, false));
         }
     },
     PISTON(Kind.SPELL, "Piston", 0, "Pi",
@@ -356,7 +355,7 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new DiscardEffect(this).then(new PlayFromPileEffect(this, new FilterKind(Kind.MONSTER),
-                    "2 monsters", 2, SideTarget.Owner, Pack.Deck, false)));
+                    "2 monsters", 2, SideTarget.Owner, Pile.DECK, false)));
         }
     },
     ENDER_DRAGON(Kind.MONSTER, "Ender Dragon", 27, "ED", "On play: destroy every other monster in its column.") {
@@ -376,7 +375,7 @@ public enum CardType {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PlayFromPileEffect(this, new FilterKind(Kind.SPELL), "the last spell", 1,
-                    SideTarget.Opponent, Pack.Graveyard, false));
+                    SideTarget.Opponent, Pile.GRAVEYARD, false));
         }
     },
     DARTY(Kind.MONSTER, "Darty", 2, "Da",

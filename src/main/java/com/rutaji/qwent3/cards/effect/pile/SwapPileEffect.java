@@ -3,7 +3,6 @@ package com.rutaji.qwent3.cards.effect.pile;
 import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
-import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
 import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
@@ -16,22 +15,22 @@ import net.kyori.adventure.text.Component;
 public final class SwapPileEffect implements Effect {
     private final CardType source;
     private final SideTarget sideA;
-    private final Pack packA;
+    private final Pile pileA;
     private final SideTarget sideB;
-    private final Pack packB;
+    private final Pile pileB;
 
-    public SwapPileEffect(CardType source, SideTarget sideA, Pack packA, SideTarget sideB, Pack packB) {
+    public SwapPileEffect(CardType source, SideTarget sideA, Pile pileA, SideTarget sideB, Pile pileB) {
         this.source = source;
         this.sideA = sideA;
-        this.packA = packA;
+        this.pileA = pileA;
         this.sideB = sideB;
-        this.packB = packB;
+        this.pileB = pileB;
     }
 
     @Override
     public Component description() {
-        return Component.text(source.displayName() + ": swap " + pileText(sideA, packA) + " and "
-                + pileText(sideB, packB));
+        return Component.text(source.displayName() + ": swap " + pileText(sideA, pileA) + " and "
+                + pileText(sideB, pileB));
     }
 
     @Override
@@ -46,20 +45,17 @@ public final class SwapPileEffect implements Effect {
 
     @Override
     public void resolve(GameEngine engine, int owner, int target) {
-        engine.swapPiles(side(sideA, owner), pile(packA), side(sideB, owner), pile(packB));
+        engine.swapPiles(side(sideA, owner), pileA, side(sideB, owner), pileB);
     }
 
     private static int side(SideTarget target, int owner) {
         return target == SideTarget.Owner ? owner : GameState.other(owner);
     }
 
-    private static Pile pile(Pack pack) {
-        return pack == Pack.Deck ? Pile.DECK : Pile.GRAVEYARD;
-    }
 
     /** E.g. "your deck", "your opponent's graveyard". */
-    private static String pileText(SideTarget side, Pack pack) {
+    private static String pileText(SideTarget side, Pile pile) {
         return (side == SideTarget.Opponent ? "your opponent's" : "your")
-                + (pack == Pack.Deck ? " deck" : " graveyard");
+                + (pile == Pile.DECK ? " deck" : " graveyard");
     }
 }

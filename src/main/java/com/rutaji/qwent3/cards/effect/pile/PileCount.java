@@ -1,10 +1,10 @@
 package com.rutaji.qwent3.cards.effect.pile;
 
+import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import com.rutaji.qwent3.cards.effect.Count;
 import com.rutaji.qwent3.cards.effect.combinator.CountEffect;
 import com.rutaji.qwent3.cards.effect.combinator.IfEffect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
-import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
 import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.CardFilter;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterCard;
@@ -14,32 +14,32 @@ import org.jspecify.annotations.Nullable;
 
 
 /**
- * Counts the matching cards in a deck or graveyard ({@code pack}) of a side ({@code side}, seen from the effect's
+ * Counts the matching cards in a deck or graveyard ({@code pile}) of a side ({@code side}, seen from the effect's
  * owner), e.g. "every Potato in your graveyard". Use it with {@link CountEffect} or, via {@link #atLeast},
  * {@link IfEffect}.
  */
 public final class PileCount implements Count {
     /** Null = any card. */
     private final @Nullable CardFilter filter;
-    private final Pack pack;
+    private final Pile pile;
     private final SideTarget side;
 
-    public PileCount(@Nullable CardFilter filter, Pack pack, SideTarget side) {
+    public PileCount(@Nullable CardFilter filter, Pile pile, SideTarget side) {
         this.filter = filter;
-        this.pack = pack;
+        this.pile = pile;
         this.side = side;
     }
 
     /** The copies of a card in the owner's graveyard. */
     public static PileCount graveyard(CardType card) {
-        return new PileCount(new FilterCard(card), Pack.Graveyard, SideTarget.Owner);
+        return new PileCount(new FilterCard(card), Pile.GRAVEYARD, SideTarget.Owner);
     }
 
     @Override
     public int count(GameState state, int owner) {
         Side s = state.side(side == SideTarget.Owner ? owner : GameState.other(owner));
         int count = 0;
-        for (CardType card : pack == Pack.Deck ? s.deck() : s.graveyard()) {
+        for (CardType card : pile == Pile.DECK ? s.deck() : s.graveyard()) {
             if (filter == null || filter.check(card)) {
                 count++;
             }

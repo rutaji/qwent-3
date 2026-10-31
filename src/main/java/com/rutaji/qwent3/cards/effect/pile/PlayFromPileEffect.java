@@ -3,7 +3,6 @@ package com.rutaji.qwent3.cards.effect.pile;
 import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
-import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
 import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.CardFilter;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
@@ -16,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Plays up to {@code count} matching cards for the owner from a deck or graveyard ({@code pack}) of a side
+ * Plays up to {@code count} matching cards for the owner from a deck or graveyard ({@code pile}) of a side
  * ({@code side}, seen from the owner), one at a time. Each time the top-most matching card that can be played now is
  * taken (the deck's top is its first card, the graveyard's the one that entered it last):
  * <ul>
@@ -38,19 +37,19 @@ public final class PlayFromPileEffect implements Effect {
     private final String what;
     private final int count;
     private final SideTarget side;
-    private final Pack pack;
+    private final Pile pile;
     /** True = monsters go to a random tile they can be played on, without asking the owner. */
     private final boolean random;
 
     /** @param what the cards for the description, e.g. "every Basic Zombie", "2 monsters", "the last spell" */
     public PlayFromPileEffect(CardType source, @Nullable CardFilter filter, String what, int count, SideTarget side,
-                              Pack pack, boolean random) {
+                              Pile pile, boolean random) {
         this.source = source;
         this.filter = filter;
         this.what = what;
         this.count = count;
         this.side = side;
-        this.pack = pack;
+        this.pile = pile;
         this.random = random;
     }
 
@@ -84,7 +83,7 @@ public final class PlayFromPileEffect implements Effect {
             engine.queueNext(owner, new PlaceMonster(card));
             return;
         }
-        engine.removeFromPile(pileSide(owner), pile(), card);
+        engine.removeFromPile(pileSide(owner), pile, card);
         queueRest(engine, owner);
         // Like a spell played from hand: into the caster's graveyard right away, then its effects resolve.
         engine.addToGraveyard(owner, card);
@@ -94,7 +93,7 @@ public final class PlayFromPileEffect implements Effect {
     /** Queues this effect again at the front for the remaining cards, if there are any and one can be played. */
     private void queueRest(GameEngine engine, int owner) {
         PlayFromPileEffect rest = new PlayFromPileEffect(source, filter, what, count == ALL ? ALL : count - 1, side,
-                pack, random);
+                pile, random);
         if (rest.hasValidTargets(engine.state(), owner)) {
             engine.queueNext(owner, rest);
         }
@@ -102,7 +101,7 @@ public final class PlayFromPileEffect implements Effect {
 
     /** The top-most matching card that can be played now (a spell, or a monster with a free tile); null if none. */
     private @Nullable CardType next(GameState state, int owner) {
-        List<CardType> cards = pack == Pack.Deck
+        List<CardType> cards = pile == Pile.DECK
                 ? state.side(pileSide(owner)).deck()
                 : state.side(pileSide(owner)).graveyard().reversed();
         for (CardType card : cards) {
@@ -128,14 +127,10 @@ public final class PlayFromPileEffect implements Effect {
         return side == SideTarget.Owner ? owner : GameState.other(owner);
     }
 
-    private Pile pile() {
-        return pack == Pack.Deck ? Pile.DECK : Pile.GRAVEYARD;
-    }
-
     /** E.g. "your deck", "your opponent's graveyard". */
     private String pileText() {
         return (side == SideTarget.Opponent ? "your opponent's" : "your")
-                + (pack == Pack.Deck ? " deck" : " graveyard");
+                + (pile == Pile.DECK ? " deck" : " graveyard");
     }
 
     /** Second step for a monster: the owner sees which one it is and picks its tile (or it goes to a random one). */
@@ -159,7 +154,7 @@ public final class PlayFromPileEffect implements Effect {
 
         @Override
         public boolean hasValidTargets(GameState state, int owner) {
-            return state.pileContains(pileSide(owner), pile(), card) && !tiles(state, owner, card).isEmpty();
+            return state.pileContains(pileSide(owner), pile, card) && !tiles(state, owner, card).isEmpty();
         }
 
         @Override
@@ -173,7 +168,7 @@ public final class PlayFromPileEffect implements Effect {
                 List<Integer> tiles = tiles(engine.state(), owner, card);
                 target = tiles.get(ThreadLocalRandom.current().nextInt(tiles.size()));
             }
-            if (engine.removeFromPile(pileSide(owner), pile(), card)) {
+            if (engine.removeFromPile(pileSide(owner), pile, card)) {
                 engine.play(owner, card, target);
                 queueRest(engine, owner);
             }
