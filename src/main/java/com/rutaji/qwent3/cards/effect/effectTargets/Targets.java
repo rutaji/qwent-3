@@ -1,4 +1,4 @@
-package com.rutaji.qwent3.cards.effect;
+package com.rutaji.qwent3.cards.effect.effectTargets;
 
 import com.rutaji.qwent3.cards.gameLogic.Unit;
 

@@ -431,23 +431,22 @@ public final class GameEngine {
     }
 
     /**
-     * Moves the unit one row in the direction; units in the way are pushed along. Units that end on the other
-     * side belong to that side.
+     * Moves the unit one step (see {@link GameState#step}); units in the way are pushed along. Units that end on the
+     * other side belong to that side. False (nothing moves) if the chain would be pushed off the board.
      */
-    public void shift(int tile, int direction) {
-        if (!state.canShift(tile, direction)) {
-            return;
+    public boolean shift(int tile, int lineStep, int columnStep) {
+        if (!state.canShift(tile, lineStep, columnStep)) {
+            return false;
         }
-        int column = tile % COLUMNS;
-        int start = GameState.linePosition(tile);
-        for (int position = state.shiftEnd(tile, direction); position != start; position -= direction) {
-            int to = GameState.tileAtLine(position, column);
-            int from = GameState.tileAtLine(position - direction, column);
+        for (int to = state.shiftEnd(tile, lineStep, columnStep); to != tile; ) {
+            int from = GameState.step(to, -lineStep, -columnStep);
             Unit unit = state.board[from];
             state.board[from] = null;
             state.board[to] = unit;
             unit.moveTo(to);
+            to = from;
         }
+        return true;
     }
 
     /** Draws cards from the top of the deck. With a full hand the card is discarded to the graveyard. */
@@ -508,25 +507,58 @@ public final class GameEngine {
         state.sides[side].graveyard.add(card);
     }
 
-    /** Moves every copy of a card from a side's deck to their graveyard; returns how many. */
-    public int discardFromDeck(int side, CardType card) {
-        Side s = state.sides[side];
-        int moved = 0;
-        while (s.deck.remove(card)) {
-            s.graveyard.add(card);
-            moved++;
+    /**
+     * Puts a card into a side's deck or graveyard: on top (the deck's top is its first card, the graveyard's the one
+     * that entered it last) or at a random position.
+     */
+    public void addToPile(int side, Pile pile, CardType card, boolean onTop) {
+        List<CardType> cards = state.sides[side].pile(pile);
+        if (!onTop) {
+            cards.add(ThreadLocalRandom.current().nextInt(cards.size() + 1), card);
+        } else if (pile == Pile.DECK) {
+            cards.addFirst(card);
+        } else {
+            cards.add(card);
         }
-        return moved;
     }
 
-    /** Swaps a side's deck and graveyard, keeping both orders (the first graveyard card becomes the top card). */
-    public void swapDeckAndGraveyard(int side) {
-        Side s = state.sides[side];
-        List<CardType> oldDeck = new ArrayList<>(s.deck);
-        s.deck.clear();
-        s.deck.addAll(s.graveyard);
-        s.graveyard.clear();
-        s.graveyard.addAll(oldDeck);
+    /**
+     * Moves every matching card (null filter = any) from a side's deck or graveyard into a deck or graveyard (the same
+     * side's or the other's), each one on top or at a random position, see {@link #addToPile}; returns how many.
+     */
+    public int moveBetweenPiles(int fromSide, Pile from, int toSide, Pile to, @Nullable CardFilter filter,
+                                boolean onTop) {
+        List<CardType> source = state.sides[fromSide].pile(from);
+        // Take them all out first, so moving within one pile doesn't meet the same cards again.
+        List<CardType> moved = new ArrayList<>();
+        for (int i = 0; i < source.size(); ) {
+            if (filter == null || filter.check(source.get(i))) {
+                moved.add(source.remove(i));
+            } else {
+                i++;
+            }
+        }
+        for (CardType card : moved) {
+            addToPile(toSide, to, card, onTop);
+        }
+        return moved.size();
+    }
+
+    /**
+     * Swaps the contents of two piles (a deck or graveyard of either side), keeping both orders: the cards keep their
+     * list positions, e.g. a graveyard's first card becomes the deck's top card. Nothing happens for the same pile.
+     */
+    public void swapPiles(int sideA, Pile pileA, int sideB, Pile pileB) {
+        List<CardType> a = state.sides[sideA].pile(pileA);
+        List<CardType> b = state.sides[sideB].pile(pileB);
+        if (a == b) {
+            return;
+        }
+        List<CardType> oldA = new ArrayList<>(a);
+        a.clear();
+        a.addAll(b);
+        b.clear();
+        b.addAll(oldA);
     }
 
     /** Takes one copy of a card out of a side's deck or graveyard; false if there is none. */
@@ -539,20 +571,9 @@ public final class GameEngine {
         return removeRandom(state.sides[side].deck, filter);
     }
 
-    /** Removes a random matching card from a side's graveyard for good; null if there is none. */
-    public @Nullable CardType banishRandom(int side, Predicate<CardType> filter) {
-        return removeRandom(state.sides[side].graveyard, filter);
-    }
-
-    /** Removes the card that entered a side's graveyard last among the matching ones; null if there is none. */
-    public @Nullable CardType banishLast(int side, Predicate<CardType> filter) {
-        List<CardType> graveyard = state.sides[side].graveyard;
-        for (int i = graveyard.size() - 1; i >= 0; i--) {
-            if (filter.test(graveyard.get(i))) {
-                return graveyard.remove(i);
-            }
-        }
-        return null;
+    /** Removes a random matching card (null filter = any) from a side's deck or graveyard for good; null if none. */
+    public @Nullable CardType banishRandom(int side, Pile pile, @Nullable CardFilter filter) {
+        return removeRandom(state.sides[side].pile(pile), card -> filter == null || filter.check(card));
     }
 
     private static @Nullable CardType removeRandom(List<CardType> cards, Predicate<CardType> filter) {

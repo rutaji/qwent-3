@@ -10,37 +10,52 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Creates a monster card and plays it on an empty tile of the owner's side (its on-play effect triggers too).
- * The owner picks the tile, or with {@link #random} it goes to a random one without asking.
+ * Creates {@code count} copies of a monster card and plays them, one at a time, on empty tiles of the owner's side
+ * (their on-play effects trigger too). The owner picks each tile, or with {@link #random} they go to random ones
+ * without asking. Stops when the side is full; cancelled if it is full at the start.
  */
 public final class SummonEffect implements Effect {
     private final CardType source;
     private final CardType summoned;
+    private final int count;
     private final boolean random;
+    private int done;
 
-    /** The player picks the empty tile. */
+    /** One copy; the player picks the empty tile. */
     public SummonEffect(CardType source, CardType summoned) {
-        this(source, summoned, false);
+        this(source, summoned, 1);
     }
 
-    private SummonEffect(CardType source, CardType summoned, boolean random) {
+    /** The player picks the empty tile for each copy. */
+    public SummonEffect(CardType source, CardType summoned, int count) {
+        this(source, summoned, count, false);
+    }
+
+    private SummonEffect(CardType source, CardType summoned, int count, boolean random) {
         if (!summoned.isMonster()) {
             throw new IllegalArgumentException("Only monsters can be summoned: " + summoned);
         }
         this.source = source;
         this.summoned = summoned;
+        this.count = count;
         this.random = random;
     }
 
-    /** Summons on a random empty tile, without asking the player. */
+    /** One copy on a random empty tile, without asking the player. */
     public static SummonEffect random(CardType source, CardType summoned) {
-        return new SummonEffect(source, summoned, true);
+        return random(source, summoned, 1);
+    }
+
+    /** Copies on random empty tiles, without asking the player. */
+    public static SummonEffect random(CardType source, CardType summoned, int count) {
+        return new SummonEffect(source, summoned, count, true);
     }
 
     @Override
     public Component description() {
         return Component.text(source.displayName() + ": summon a " + summoned.displayName()
-                + (random ? " on a random empty tile" : " on an empty tile of your side"));
+                + (random ? " on a random empty tile" : " on an empty tile of your side")
+                + (count > 1 ? " (" + (done + 1) + " of " + count + ")" : ""));
     }
 
     @Override
@@ -50,7 +65,7 @@ public final class SummonEffect implements Effect {
 
     @Override
     public boolean hasValidTargets(GameState state, int owner) {
-        return !emptyTiles(state, owner).isEmpty();
+        return done < count && !emptyTiles(state, owner).isEmpty();
     }
 
     @Override
@@ -65,6 +80,9 @@ public final class SummonEffect implements Effect {
             tile = empty.get(ThreadLocalRandom.current().nextInt(empty.size()));
         }
         engine.play(owner, summoned, tile);
+        if (++done < count && hasValidTargets(engine.state(), owner)) {
+            engine.queueNext(owner, this);
+        }
     }
 
     private List<Integer> emptyTiles(GameState state, int owner) {

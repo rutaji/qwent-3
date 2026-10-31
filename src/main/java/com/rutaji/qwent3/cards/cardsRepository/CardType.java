@@ -1,35 +1,30 @@
 package com.rutaji.qwent3.cards.cardsRepository;
 
+import com.rutaji.qwent3.cards.effect.Act;
 import com.rutaji.qwent3.cards.effect.AddPowerEffect;
-import com.rutaji.qwent3.cards.effect.AdjacentDamageEffect;
-import com.rutaji.qwent3.cards.effect.AddToDeckEffect;
-import com.rutaji.qwent3.cards.effect.AdjacentDestroyEffect;
-import com.rutaji.qwent3.cards.effect.BanishToBuffSelfEffect;
-import com.rutaji.qwent3.cards.effect.BanishToDamageEffect;
-import com.rutaji.qwent3.cards.effect.BanishToSummonEffect;
-import com.rutaji.qwent3.cards.effect.BuffPerGraveyardCardEffect;
-import com.rutaji.qwent3.cards.effect.ColumnDestroyEffect;
+import com.rutaji.qwent3.cards.effect.AreaEffect;
+import com.rutaji.qwent3.cards.effect.AddToPackEffect;
+import com.rutaji.qwent3.cards.effect.BanishEffect;
 import com.rutaji.qwent3.cards.effect.CopyToPileEffect;
-import com.rutaji.qwent3.cards.effect.DestroyExtremeEffect;
+import com.rutaji.qwent3.cards.effect.CountEffect;
 import com.rutaji.qwent3.cards.effect.DiscardEffect;
-import com.rutaji.qwent3.cards.effect.DiscardFromDeckEffect;
 import com.rutaji.qwent3.cards.effect.DrawEffect;
-import com.rutaji.qwent3.cards.effect.DrawIfGraveyardHasEffect;
 import com.rutaji.qwent3.cards.effect.Effect;
-import com.rutaji.qwent3.cards.effect.FillRowEffect;
 import com.rutaji.qwent3.cards.effect.IfEffect;
-import com.rutaji.qwent3.cards.effect.MassEffect;
-import com.rutaji.qwent3.cards.effect.MirrorEffect;
+import com.rutaji.qwent3.cards.effect.MoveBetweenPacksEffect;
+import com.rutaji.qwent3.cards.effect.MoveEffect;
+import com.rutaji.qwent3.cards.effect.PileCount;
 import com.rutaji.qwent3.cards.effect.PlayFromPileEffect;
-import com.rutaji.qwent3.cards.effect.PlayRandomFromDeckEffect;
 import com.rutaji.qwent3.cards.effect.ReplayEffect;
 import com.rutaji.qwent3.cards.effect.SetPowerEffect;
-import com.rutaji.qwent3.cards.effect.ShiftEffect;
+import com.rutaji.qwent3.cards.effect.Select;
 import com.rutaji.qwent3.cards.effect.SummonEffect;
-import com.rutaji.qwent3.cards.effect.SwapDeckAndGraveyardEffect;
-import com.rutaji.qwent3.cards.effect.Targets;
+import com.rutaji.qwent3.cards.effect.SwapPileEffect;
+import com.rutaji.qwent3.cards.effect.effectTargets.Targets;
+import com.rutaji.qwent3.cards.effect.effectTargets.Direction;
 import com.rutaji.qwent3.cards.effect.effectTargets.Pack;
 import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
+import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterCard;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.FilterKind;
 import com.rutaji.qwent3.cards.gameLogic.Unit;
 import org.jspecify.annotations.Nullable;
@@ -66,13 +61,13 @@ public enum CardType {
     GRAVEL(Kind.SPELL, "Gravel", 0, "Gr", "Destroy the lowest power monsters (all of them if tied).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(DestroyExtremeEffect.lowest(this));
+            return List.of(new AreaEffect(this, Select.lowestPower(), Act.destroy()));
         }
     },
     LIGHTNING(Kind.SPELL, "Lightning", 0, "Li", "Destroy the highest power monsters (all of them if tied).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(DestroyExtremeEffect.highest(this));
+            return List.of(new AreaEffect(this, Select.highestPower(), Act.destroy()));
         }
     },
     SKELETON(Kind.MONSTER, "Skeleton", 4, "Sk", "On play: deal 3 damage to a monster.") {
@@ -100,14 +95,16 @@ public enum CardType {
     HORDE(Kind.SPELL, "Horde", 0, "Ho", "Play all Basic Zombies from your deck.", Tag.ZOMBIE) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new PlayFromPileEffect(this, BASIC_ZOMBIE, Pile.DECK));
+            return List.of(new PlayFromPileEffect(this, new FilterCard(BASIC_ZOMBIE), "every Basic Zombie",
+                    PlayFromPileEffect.ALL, SideTarget.Owner, Pack.Deck, false));
         }
     },
     ZOMBIE_AWAKENING(Kind.SPELL, "Zombie Awakening", 0, "ZA", "Play all Basic Zombies from your graveyard.",
             Tag.ZOMBIE) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new PlayFromPileEffect(this, BASIC_ZOMBIE, Pile.GRAVEYARD));
+            return List.of(new PlayFromPileEffect(this, new FilterCard(BASIC_ZOMBIE), "every Basic Zombie",
+                    PlayFromPileEffect.ALL, SideTarget.Owner, Pack.Graveyard, false));
         }
     },
     DESERT_ZOMBIE(Kind.MONSTER, "Desert Zombie", 5, "DZ", "On play: deal 2 damage to a monster.", Tag.ZOMBIE) {
@@ -134,14 +131,14 @@ public enum CardType {
             Set.of(Keyword.TREACHEROUS), Tag.PLANT) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return self == null ? List.of() : List.of(new AdjacentDamageEffect(this, 1, self));
+            return self == null ? List.of() : List.of(new AreaEffect(this, Select.neighbours(self), Act.addPower(-1)));
         }
     },
     BEETROOT(Kind.MONSTER, "Beetroot", 1, "Bt", "No effect.", Set.of(Keyword.TREACHEROUS), Tag.PLANT),
     BAD_FARMING(Kind.SPELL, "Bad Farming", 0, "BF", "Fill your back row with Beetroots.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(FillRowEffect.backRow(this, BEETROOT));
+            return List.of(new AreaEffect(this, Select.backRow(), Act.summon(BEETROOT)));
         }
     },
     EMERALD(Kind.MONSTER, "Emerald", 6, "Em", "On play on your opponent's side: draw a card from their deck.",
@@ -157,7 +154,7 @@ public enum CardType {
             Set.of(Keyword.TREACHEROUS)) {
         @Override
         public List<Effect> onDeath(Unit self) {
-            return List.of(new AdjacentDestroyEffect(this, self));
+            return List.of(new AreaEffect(this, Select.neighboursOfLastTile(self), Act.destroy()));
         }
     },
     DIAMOND_HOE(Kind.SPELL, "Diamond Hoe", 0, "DH", "Put 3 copies of a monster on the board into your deck.") {
@@ -182,7 +179,9 @@ public enum CardType {
     POTATO(Kind.MONSTER, "Potato", 1, "Po", "On play: +3 power for every Potato in your graveyard.", Tag.PLANT) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return self == null ? List.of() : List.of(new BuffPerGraveyardCardEffect(this, self, POTATO, 3));
+            return self == null ? List.of() : List.of(new CountEffect(this, PileCount.graveyard(POTATO),
+                    "+3 power for every Potato in your graveyard").thenWith(n -> List.of(
+                    new AreaEffect(this, Select.self(self), Act.addPower(3 * n), "+" + 3 * n + " power"))));
         }
     },
     FERTILIZING(Kind.SPELL, "Fertilizing", 0, "Fe", "Discard 2 cards to draw 2 cards.") {
@@ -194,40 +193,42 @@ public enum CardType {
     FARMER(Kind.MONSTER, "Farmer", 4, "Fa", "On play: banish a random Plant from your graveyard to play a Farmer.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new BanishToSummonEffect(this, Tag.PLANT, FARMER));
+            return List.of(BanishEffect.fromGraveyard(this, Tag.PLANT).then(new SummonEffect(this, FARMER)));
         }
     },
     WHEAT(Kind.MONSTER, "Wheat", 2, "Wh", "On play: banish a random Plant from your graveyard for +10 power.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return self == null ? List.of() : List.of(new BanishToBuffSelfEffect(this, Tag.PLANT, self, 10));
+            return self == null ? List.of() : List.of(BanishEffect.fromGraveyard(this, Tag.PLANT)
+                    .then(new AreaEffect(this, Select.self(self), Act.addPower(10), "+10 power")));
         }
     },
     THORNY_ROSE(Kind.MONSTER, "Thorny Rose", 6, "TR",
             "On play: banish a random Plant from your graveyard to deal 4 damage to a monster.", Tag.PLANT) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new BanishToDamageEffect(this, Tag.PLANT, 4));
+            return List.of(BanishEffect.fromGraveyard(this, Tag.PLANT).then(new AddPowerEffect(this, -4)));
         }
     },
     BROWN_MUSHROOM(Kind.MONSTER, "Brown Mushroom", 3, "BM",
             "On play: discard every Brown Mushroom from your deck.", Tag.PLANT) {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardFromDeckEffect(this, BROWN_MUSHROOM));
+            return List.of(new MoveBetweenPacksEffect(this, new FilterCard(BROWN_MUSHROOM), "every Brown Mushroom",
+                    SideTarget.Owner, Pack.Deck, SideTarget.Owner, Pack.Graveyard, true));
         }
     },
     WEEDS(Kind.MONSTER, "Weeds", 2, "We", "When your opponent casts a spell: put a Weeds on top of their deck.",
             Set.of(Keyword.TREACHEROUS)) {
         @Override
         public List<Effect> onOpponentSpell(Unit self) {
-            return List.of(new AddToDeckEffect(this, WEEDS, 1, true, true));
+            return List.of(new AddToPackEffect(this, WEEDS, 1, SideTarget.Opponent, Pack.Deck, true));
         }
     },
     SWITCHAROO(Kind.SPELL, "Switcharoo", 0, "Sw", "Swap your deck and your graveyard (no shuffling).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new SwapDeckAndGraveyardEffect(this));
+            return List.of(new SwapPileEffect(this, SideTarget.Owner, Pack.Deck, SideTarget.Owner, Pack.Graveyard));
         }
     },
     SILVERFISH(Kind.MONSTER, "Silverfish", 1, "Si", "No effect."),
@@ -235,27 +236,27 @@ public enum CardType {
             Set.of(Keyword.TREACHEROUS)) {
         @Override
         public List<Effect> onDeath(Unit self) {
-            return List.of(FillRowEffect.rowOf(this, SILVERFISH, self));
+            return List.of(new AreaEffect(this, Select.row(self), Act.summon(SILVERFISH)));
         }
     },
     INFESTATION(Kind.SPELL, "Infestation", 0, "In", "Shuffle 4 Silverfish into your opponent's deck.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new AddToDeckEffect(this, SILVERFISH, 4, true, false));
+            return List.of(new AddToPackEffect(this, SILVERFISH, 4, SideTarget.Opponent, Pack.Deck, false));
         }
     },
     PISTON(Kind.SPELL, "Piston", 0, "Pi",
             "Push a monster one row towards your opponent (monsters in the way are pushed along).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(ShiftEffect.push(this));
+            return List.of(new MoveEffect(this, Direction.Forward, 1, true));
         }
     },
     SLIME_PISTON(Kind.SPELL, "Slime Piston", 0, "SP",
             "Discard a card to pull a monster one row towards you (monsters in the way are pushed along).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardEffect(this).then(ShiftEffect.pull(this)));
+            return List.of(new DiscardEffect(this).then(new MoveEffect(this, Direction.Back, 1, true)));
         }
     },
     DRUNK_BRAWLER(Kind.MONSTER, "Drunk Brawler", 3, "DB", "When damaged and survives: summon a Drunk Brawler.") {
@@ -275,20 +276,19 @@ public enum CardType {
     SWARM(Kind.SPELL, "Swarm", 0, "Sm", "Play 3 Silverfish.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new SummonEffect(this, SILVERFISH), new SummonEffect(this, SILVERFISH),
-                    new SummonEffect(this, SILVERFISH));
+            return List.of(new SummonEffect(this, SILVERFISH, 3));
         }
     },
     SPLASH_OF_STRENGTH(Kind.SPELL, "Splash of Strength", 0, "SS", "Give all your monsters +2 power.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(MassEffect.buffOwn(this, 2));
+            return List.of(new AreaEffect(this, Select.all(Targets.OWN), Act.addPower(2)));
         }
     },
     HARSH_WORLD(Kind.SPELL, "Harsh World", 0, "HW", "Deal 2 damage to all monsters (both sides).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(MassEffect.damageAll(this, 2));
+            return List.of(new AreaEffect(this, Select.all(Targets.ANY), Act.addPower(-2)));
         }
     },
     BEE(Kind.MONSTER, "Bee", 5, "Bee", "On play: give a monster +2 power.") {
@@ -306,7 +306,7 @@ public enum CardType {
     SHAMAN(Kind.MONSTER, "Shaman", 2, "Sh", "On play: give every monster in its row +2 power (itself too).") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return self == null ? List.of() : List.of(MassEffect.buffRow(this, 2, self));
+            return self == null ? List.of() : List.of(new AreaEffect(this, Select.row(self), Act.addPower(2)));
         }
     },
     BARD(Kind.MONSTER, "Bard", 3, "Bd", "On play: give a monster +1 power, twice (can be the same one).") {
@@ -325,7 +325,8 @@ public enum CardType {
             "If your graveyard has at least 2 Music Discs (this one counts), draw a card.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DrawIfGraveyardHasEffect(this, MUSIC_DISC, 2));
+            return List.of(new IfEffect(this, PileCount.graveyard(MUSIC_DISC).atLeast(2),
+                    "at least 2 Music Discs in your graveyard", new DrawEffect(this, 1)));
         }
     },
     ENDERMAN(Kind.MONSTER, "Enderman", 14, "En", "On play: discard a card.") {
@@ -346,17 +347,17 @@ public enum CardType {
         }
     },
     ENDERMITE(Kind.MONSTER, "Endermite", 2, "Et",
-            "On play: discard a card to play 2 random monsters from your deck.") {
+            "On play: discard a card to play 2 monsters from your deck.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new DiscardEffect(this).then(
-                    new PlayRandomFromDeckEffect(this), new PlayRandomFromDeckEffect(this)));
+            return List.of(new DiscardEffect(this).then(new PlayFromPileEffect(this, new FilterKind(Kind.MONSTER),
+                    "2 monsters", 2, SideTarget.Owner, Pack.Deck, false)));
         }
     },
     ENDER_DRAGON(Kind.MONSTER, "Ender Dragon", 27, "ED", "On play: destroy every other monster in its column.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return self == null ? List.of() : List.of(new ColumnDestroyEffect(this, self));
+            return self == null ? List.of() : List.of(new AreaEffect(this, Select.column(self, false), Act.destroy()));
         }
     },
     SUMMON_ENDER_DRAGON(Kind.SPELL, "Summon Ender Dragon", 0, "SE", "Discard 4 cards to play an Ender Dragon.") {
@@ -369,7 +370,8 @@ public enum CardType {
             "Banish the last spell that entered your opponent's graveyard to play it.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
-            return List.of(new MirrorEffect(this));
+            return List.of(new PlayFromPileEffect(this, new FilterKind(Kind.SPELL), "the last spell", 1,
+                    SideTarget.Opponent, Pack.Graveyard, false));
         }
     };
 
@@ -464,7 +466,7 @@ public enum CardType {
     }
     public boolean hasTag(Set<Tag> tags) {
         for(Tag t : tags){
-            if(tags.contains(t)){
+            if(this.tags.contains(t)){
                 return true;
             }
         }

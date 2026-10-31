@@ -1,6 +1,7 @@
 package com.rutaji.qwent3.cards.effect;
 
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.effect.effectTargets.Targets;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
 import com.rutaji.qwent3.cards.gameLogic.Unit;

@@ -216,19 +216,33 @@ public final class GameState {
     }
 
     /** Whether the unit on the tile can be moved one row in the direction (pushing the units in front of it). */
-    public boolean canShift(int tile, int direction) {
-        return unit(tile) != null && shiftEnd(tile, direction) >= 0;
+    /**
+     * The tile one step from {@code tile}: {@code lineStep} along its column in line positions (towards a side, see
+     * {@link #directionTowards}), {@code columnStep} along its row (-1 = left, +1 = right). -1 if that is off the
+     * board.
+     */
+    public static int step(int tile, int lineStep, int columnStep) {
+        int position = linePosition(tile) + lineStep;
+        int column = tile % COLUMNS + columnStep;
+        if (position < 0 || position >= ROWS || column < 0 || column >= COLUMNS) {
+            return -1;
+        }
+        return tileAtLine(position, column);
+    }
+
+    /** Whether the unit on the tile can move one step (see {@link #step}); units in the way would be pushed along. */
+    public boolean canShift(int tile, int lineStep, int columnStep) {
+        return unit(tile) != null && shiftEnd(tile, lineStep, columnStep) >= 0;
     }
 
     /**
-     * The line position of the first empty tile from {@code tile} in a direction (the units in between get pushed
-     * there), or -1 if the chain of units would be pushed off the board.
+     * The first empty tile from {@code tile} in a direction (the units in between get pushed there), or -1 if the
+     * chain of units would be pushed off the board.
      */
-    int shiftEnd(int tile, int direction) {
-        int column = tile % COLUMNS;
-        for (int position = linePosition(tile) + direction; position >= 0 && position < ROWS; position += direction) {
-            if (board[tileAtLine(position, column)] == null) {
-                return position;
+    int shiftEnd(int tile, int lineStep, int columnStep) {
+        for (int t = step(tile, lineStep, columnStep); t >= 0; t = step(t, lineStep, columnStep)) {
+            if (board[t] == null) {
+                return t;
             }
         }
         return -1;
