@@ -182,7 +182,7 @@ class PileCardsTest {
         play(engine, 0, MIRROR, t(0, 0, 0));
         assertNull(engine.state().unit(t(1, 0, 1)), "copied Gravel destroyed the lowest");
         assertEquals(List.of(ARROW, BEAR, BASIC_ZOMBIE), engine.state().side(1).graveyard(), "Gravel banished");
-        assertEquals(List.of(MIRROR), engine.state().side(0).graveyard());
+        assertEquals(List.of(MIRROR, GRAVEL), engine.state().side(0).graveyard(), "cast Gravel goes to the caster's graveyard");
         assertTrue(engine.state().log().stream().anyMatch(e -> e.text().equals("Casts Gravel")));
     }
 

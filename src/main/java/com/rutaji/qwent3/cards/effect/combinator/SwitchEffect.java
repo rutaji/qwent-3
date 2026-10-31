@@ -1,5 +1,7 @@
-package com.rutaji.qwent3.cards.effect;
+package com.rutaji.qwent3.cards.effect.combinator;
 
+import com.rutaji.qwent3.cards.effect.Effect;
+import com.rutaji.qwent3.cards.effect.ResultEffect;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;

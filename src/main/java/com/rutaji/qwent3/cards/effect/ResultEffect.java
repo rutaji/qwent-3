@@ -1,5 +1,6 @@
 package com.rutaji.qwent3.cards.effect;
 
+import com.rutaji.qwent3.cards.effect.combinator.SwitchEffect;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import org.jspecify.annotations.Nullable;
 

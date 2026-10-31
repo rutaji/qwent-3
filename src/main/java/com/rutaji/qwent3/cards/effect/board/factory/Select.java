@@ -1,5 +1,7 @@
-package com.rutaji.qwent3.cards.effect;
+package com.rutaji.qwent3.cards.effect.board.factory;
 
+import com.rutaji.qwent3.cards.effect.board.AreaEffect;
+import com.rutaji.qwent3.cards.effect.board.TileSelector;
 import com.rutaji.qwent3.cards.effect.effectTargets.Targets;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
 import com.rutaji.qwent3.cards.gameLogic.Unit;

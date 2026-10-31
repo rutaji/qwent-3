@@ -1,5 +1,6 @@
-package com.rutaji.qwent3.cards.effect;
+package com.rutaji.qwent3.cards.effect.board;
 
+import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.effect.effectTargets.Direction;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;

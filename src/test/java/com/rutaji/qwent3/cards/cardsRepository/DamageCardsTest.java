@@ -74,7 +74,7 @@ class DamageCardsTest {
         play(engine, 0, GRAVEL, t(0, 0, 0));
         assertEquals(0, onBoard(engine, BASIC_ZOMBIE));
         assertNull(engine.state().pendingEffect());
-        assertEquals("Gravel: destroy the lowest power monsters -> Basic Zombie (2), Basic Zombie (2)",
+        assertEquals("Gravel: destroy the monsters with the lowest power -> Basic Zombie (2), Basic Zombie (2)",
                 engine.state().log().getLast().text());
     }
 

@@ -1,5 +1,6 @@
-package com.rutaji.qwent3.cards.effect;
+package com.rutaji.qwent3.cards.effect.pile;
 
+import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import com.rutaji.qwent3.cards.effect.effectTargets.Pack;

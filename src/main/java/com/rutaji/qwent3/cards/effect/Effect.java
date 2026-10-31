@@ -1,5 +1,6 @@
 package com.rutaji.qwent3.cards.effect;
 
+import com.rutaji.qwent3.cards.effect.combinator.ToEffect;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;

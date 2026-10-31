@@ -1,8 +1,8 @@
 package com.rutaji.qwent3.cards.gameLogic;
 
+import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
-import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.CardFilter;
 import com.rutaji.qwent3.cards.gameLogic.GameState.LogEntry;
 import com.rutaji.qwent3.cards.gameLogic.GameState.Phase;
@@ -486,21 +486,9 @@ public final class GameEngine {
         return drawn;
     }
 
-    /** Moves a hand card to the graveyard. */
-    public void discard(int side, int index) {
-        Side s = state.sides[side];
-        s.graveyard.add(s.hand.remove(index));
-    }
-
-    /** Puts a card on top of a side's deck. */
-    public void putOnTopOfDeck(int side, CardType card) {
-        state.sides[side].deck.addFirst(card);
-    }
-
-    /** Shuffles a card into a side's deck at a random position. */
-    public void shuffleIntoDeck(int side, CardType card) {
-        List<CardType> deck = state.sides[side].deck;
-        deck.add(ThreadLocalRandom.current().nextInt(deck.size() + 1), card);
+    /** Takes a card out of a side's hand (it goes nowhere; put it somewhere with e.g. {@link #addToPile}). */
+    public CardType takeFromHand(int side, int index) {
+        return state.sides[side].hand.remove(index);
     }
 
     public void addToGraveyard(int side, CardType card) {
@@ -519,6 +507,19 @@ public final class GameEngine {
             cards.addFirst(card);
         } else {
             cards.add(card);
+        }
+    }
+
+    /**
+     * Puts a card at the bottom of a side's deck or graveyard (the deck's bottom is its last card, drawn last; the
+     * graveyard's the one that entered it first).
+     */
+    public void addToPileBottom(int side, Pile pile, CardType card) {
+        List<CardType> cards = state.sides[side].pile(pile);
+        if (pile == Pile.DECK) {
+            cards.add(card);
+        } else {
+            cards.addFirst(card);
         }
     }
 
@@ -564,11 +565,6 @@ public final class GameEngine {
     /** Takes one copy of a card out of a side's deck or graveyard; false if there is none. */
     public boolean removeFromPile(int side, Pile pile, CardType card) {
         return state.sides[side].pile(pile).remove(card);
-    }
-
-    /** Removes a random matching card from a side's deck; null if there is none. */
-    public @Nullable CardType takeRandomFromDeck(int side, Predicate<CardType> filter) {
-        return removeRandom(state.sides[side].deck, filter);
     }
 
     /** Removes a random matching card (null filter = any) from a side's deck or graveyard for good; null if none. */

@@ -60,8 +60,8 @@ class BoardTest {
         play(engine, 1, EVIL_GOBLIN, t(1, 0, 0));
         play(engine, 0, BASIC_ZOMBIE, t(0, 0, 0));
         int towardsSide1 = GameState.directionTowards(1);
-        assertTrue(engine.state().canShift(t(0, 1, 0), towardsSide1));
-        engine.shift(t(0, 1, 0), towardsSide1);
+        assertTrue(engine.state().canShift(t(0, 1, 0), towardsSide1, 0));
+        engine.shift(t(0, 1, 0), towardsSide1, 0);
         assertEquals(BEAR, engine.state().unit(t(0, 0, 0)).type());
         assertEquals(BASIC_ZOMBIE, engine.state().unit(t(1, 0, 0)).type());
         assertEquals(1, engine.state().unit(t(1, 0, 0)).owner(), "crossed to side 1");
@@ -74,9 +74,9 @@ class BoardTest {
     void cannotShiftOffTheBoard() {
         GameEngine engine = game(List.of(BEAR), List.of(BEAR), 1);
         play(engine, 1, BEAR, t(1, 1, 2));
-        assertFalse(engine.state().canShift(t(1, 1, 2), GameState.directionTowards(1)));
-        assertTrue(engine.state().canShift(t(1, 1, 2), GameState.directionTowards(0)));
-        assertFalse(engine.state().canShift(t(0, 0, 0), GameState.directionTowards(1)), "empty tile");
+        assertFalse(engine.state().canShift(t(1, 1, 2), GameState.directionTowards(1), 0));
+        assertTrue(engine.state().canShift(t(1, 1, 2), GameState.directionTowards(0), 0));
+        assertFalse(engine.state().canShift(t(0, 0, 0), GameState.directionTowards(1), 0), "empty tile");
     }
 
     @Test

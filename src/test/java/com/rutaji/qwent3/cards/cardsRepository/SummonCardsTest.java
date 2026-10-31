@@ -163,7 +163,7 @@ class SummonCardsTest {
         engine.clickTile(0, t(1, 0, 0));
         assertEquals(BEAR, engine.state().unit(t(1, 0, 0)).type(), "enemy monster isn't valid");
         engine.clickTile(0, t(0, 0, 0));
-        assertTrue(plain(engine.state().pendingEffect().description()).contains("play the copy of Stone Bricks"));
+        assertTrue(plain(engine.state().pendingEffect().description()).contains("summon a Stone Bricks"));
         engine.clickTile(0, t(1, 0, 4));    // Stone Bricks is treacherous: enemy side allowed
         assertEquals(STONE_BRICKS, engine.state().unit(t(1, 0, 4)).type());
         assertEquals(1, engine.state().unit(t(1, 0, 4)).owner());

@@ -1,5 +1,6 @@
-package com.rutaji.qwent3.cards.effect;
+package com.rutaji.qwent3.cards.effect.board;
 
+import com.rutaji.qwent3.cards.effect.board.factory.Act;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
 
