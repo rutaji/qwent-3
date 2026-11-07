@@ -132,7 +132,12 @@ public enum CardType {
             return self == null ? List.of() : List.of(new AreaEffect(this, Select.neighbours(self), Act.addPower(-1)));
         }
     },
-    BEETROOT(Kind.MONSTER, "Beetroot", 1, "Bt", "No effect.", Set.of(Keyword.TREACHEROUS), Tag.PLANT),
+    BEETROOT(Kind.MONSTER, "Beetroot", 1, "Bt", "No effect.", Set.of(Keyword.TREACHEROUS), Tag.PLANT){
+        @Override
+        public List<Effect> onDeath(@Nullable Unit self){
+            return List.of(new DrawEffect(this,1,null,SideTarget.Opponent,Pile.DECK,SideTarget.Opponent));
+        }
+    },
     BAD_FARMING(Kind.SPELL, "Bad Farming", 0, "BF", "Fill your back row with Beetroots.") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
@@ -371,7 +376,7 @@ public enum CardType {
         }
     },
     MIRROR(Kind.SPELL, "Mirror", 0, "Mi",
-            "Banish the last spell that entered your opponent's graveyard to play it.") {
+            "Play spell from your opponents grayard") {
         @Override
         public List<Effect> onPlay(@Nullable Unit self) {
             return List.of(new PlayFromPileEffect(this, new FilterKind(Kind.SPELL), "the last spell", 1,

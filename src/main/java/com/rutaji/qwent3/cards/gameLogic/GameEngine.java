@@ -17,7 +17,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 import static com.rutaji.qwent3.cards.gameLogic.GameState.BOARD_SIZE;
-import static com.rutaji.qwent3.cards.gameLogic.GameState.COLUMNS;
 import static com.rutaji.qwent3.cards.gameLogic.GameState.MAX_HAND;
 import static com.rutaji.qwent3.cards.gameLogic.GameState.MULLIGAN_REDRAWS;
 import static com.rutaji.qwent3.cards.gameLogic.GameState.POINTS_TO_WIN;
@@ -57,7 +56,7 @@ public final class GameEngine {
      * starting hand and start their mulligans; the first player is random.
      */
     public static GameEngine start(List<CardType> deck0, List<CardType> deck1) {
-        GameEngine engine = new GameEngine(shuffled(deck0), shuffled(deck1), ThreadLocalRandom.current().nextInt(2));
+        GameEngine engine = new GameEngine(shuffledDeepCopy(deck0), shuffledDeepCopy(deck1), ThreadLocalRandom.current().nextInt(2));
         for (int side = 0; side < 2; side++) {
             engine.draw(side, STARTING_HAND);
         }
@@ -65,7 +64,7 @@ public final class GameEngine {
         return engine;
     }
 
-    private static List<CardType> shuffled(List<CardType> cards) {
+    private static List<CardType> shuffledDeepCopy(List<CardType> cards) {
         List<CardType> deck = new ArrayList<>(cards);
         Collections.shuffle(deck);
         return deck;

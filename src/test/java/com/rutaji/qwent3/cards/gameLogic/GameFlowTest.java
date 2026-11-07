@@ -1,7 +1,7 @@
 package com.rutaji.qwent3.cards.gameLogic;
 
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
-import com.rutaji.qwent3.cards.deck.DeckStore;
+import com.rutaji.qwent3.cards.deck.DefaultDeck;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -23,11 +23,11 @@ class GameFlowTest {
     class Start {
         @Test
         void startDrawsNineAndStartsMulligan() {
-            GameEngine engine = GameEngine.start(DeckStore.defaultDeck(), DeckStore.defaultDeck());
+            GameEngine engine = GameEngine.start(DefaultDeck.defaultDeck(), DefaultDeck.defaultDeck());
             assertEquals(GameState.Phase.MULLIGAN, engine.state().phase());
             for (int side = 0; side < 2; side++) {
                 assertEquals(GameState.STARTING_HAND, engine.state().side(side).handSize());
-                assertEquals(DeckStore.defaultDeck().size() - GameState.STARTING_HAND, engine.state().side(side).deckSize());
+                assertEquals(DefaultDeck.defaultDeck().size() - GameState.STARTING_HAND, engine.state().side(side).deckSize());
                 assertEquals(GameState.MULLIGAN_REDRAWS, engine.state().side(side).redrawsLeft());
                 assertTrue(engine.state().awaits(side));
             }
@@ -36,7 +36,7 @@ class GameFlowTest {
 
         @Test
         void gameIsPlayedWithACopyOfTheDeck() {
-            List<CardType> deck = new ArrayList<>(DeckStore.defaultDeck());
+            List<CardType> deck = new ArrayList<>(DefaultDeck.defaultDeck());
             List<CardType> before = List.copyOf(deck);
             GameEngine engine = new GameEngine(deck, deck, 0);
             engine.draw(0, 5);

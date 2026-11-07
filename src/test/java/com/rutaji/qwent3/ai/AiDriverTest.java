@@ -2,7 +2,7 @@ package com.rutaji.qwent3.ai;
 
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.deck.DeckRules;
-import com.rutaji.qwent3.cards.deck.DeckStore;
+import com.rutaji.qwent3.cards.deck.DefaultDeck;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
 import com.rutaji.qwent3.cards.gameLogic.GameState;
 import org.junit.jupiter.api.Test;
@@ -156,7 +156,7 @@ class AiDriverTest {
         }
         Random random = new Random(12345);
         for (int game = 0; game < 300; game++) {
-            List<CardType> deck0 = game % 3 == 0 ? new ArrayList<>(DeckStore.defaultDeck()) : randomDeck(allowed, random);
+            List<CardType> deck0 = game % 3 == 0 ? new ArrayList<>(DefaultDeck.defaultDeck()) : randomDeck(allowed, random);
             List<CardType> deck1 = randomDeck(allowed, random);
             Collections.shuffle(deck0, random);
             GameEngine engine = GameEngine.start(deck0, deck1);

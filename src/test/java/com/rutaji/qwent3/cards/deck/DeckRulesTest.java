@@ -10,68 +10,61 @@ import java.util.List;
 import static com.rutaji.qwent3.cards.cardsRepository.CardType.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Deck validity and the fixed default deck. */
+/** Deck validity ({@link DeckRules#isValid}) and building a deck from cards ({@link DeckRules#fit}). */
 class DeckRulesTest {
 
-    private static List<CardType> deckOf(int copiesEach, CardType... cards) {
+    /** {@code size} different cards, none blacklisted. */
+    private static List<CardType> differentCards(int size) {
         List<CardType> deck = new ArrayList<>();
-        for (CardType card : cards) {
-            deck.addAll(Collections.nCopies(copiesEach, card));
+        for (CardType card : CardType.values()) {
+            if (deck.size() < size && !DeckRules.BLACKLIST.contains(card)) {
+                deck.add(card);
+            }
         }
+        assertEquals(size, deck.size());
         return deck;
     }
 
     @Test
-    void fifteenToThirtyCardsMaxThreeCopies() {
-        assertTrue(DeckRules.isValid(deckOf(3, BEAR, ARROW, GRAVEL, SKELETON, BOAR)));                 // 15
-        assertTrue(DeckRules.isValid(deckOf(3, BEAR, ARROW, GRAVEL, SKELETON, BOAR,
-                BEE, BARD, SHAMAN, HEALER, WARLOCK)));                                                  // 30
-        assertFalse(DeckRules.isValid(deckOf(2, BEAR, ARROW, GRAVEL, SKELETON, BOAR, BEE, BARD)));    // 14
+    void sizeMustBeBetweenMinAndMax() {
+        assertTrue(DeckRules.isValid(differentCards(DeckRules.MIN_CARDS)));
+        assertTrue(DeckRules.isValid(differentCards(DeckRules.MAX_CARDS)));
+        assertFalse(DeckRules.isValid(differentCards(DeckRules.MIN_CARDS - 1)));
+        assertFalse(DeckRules.isValid(differentCards(DeckRules.MAX_CARDS + 1)));
     }
 
     @Test
-    void problemsExplainWhatIsWrong() {
-        List<CardType> deck = deckOf(3, BEAR, ARROW, GRAVEL, SKELETON);
-        deck.add(BEAR);
-        List<String> problems = DeckRules.problems(deck);
-        assertTrue(problems.contains("It has 13 cards, it needs at least 15."));
-        assertTrue(problems.contains("It has 4 copies of Bear, the maximum is 3."));
-
-        List<CardType> big = new ArrayList<>();
-        for (CardType card : CardType.values()) {
-            if (big.size() < 31 && !DeckRules.BLACKLIST.contains(card)) {
-                big.add(card);
-            }
-        }
-        assertTrue(DeckRules.problems(big).contains("It has 31 cards, the maximum is 30."));
+    void atMostMaxCopies() {
+        List<CardType> deck = differentCards(DeckRules.MIN_CARDS);
+        deck.set(1, deck.get(0));
+        deck.set(2, deck.get(0));
+        assertTrue(DeckRules.isValid(deck));                              // 3 copies
+        deck.set(3, deck.get(0));
+        assertFalse(DeckRules.isValid(deck));                             // 4 copies
     }
 
     @Test
     void enderDragonIsBlacklisted() {
         assertTrue(DeckRules.BLACKLIST.contains(ENDER_DRAGON));
-        List<CardType> deck = deckOf(3, BEAR, ARROW, GRAVEL, SKELETON, BOAR);
+        List<CardType> deck = differentCards(DeckRules.MIN_CARDS);
         deck.add(ENDER_DRAGON);
-        assertTrue(DeckRules.problems(deck).contains("Ender Dragon is not allowed in decks."));
+        assertFalse(DeckRules.isValid(deck));
     }
 
     @Test
-    void defaultDeckIsTheFixedValidList() {
-        List<CardType> expected = new ArrayList<>();
-        expected.addAll(Collections.nCopies(2, GRAVEL));
-        expected.add(LIGHTNING);
-        expected.addAll(Collections.nCopies(2, SKELETON));
-        expected.add(BLAZE);
-        expected.add(BOAR);
-        expected.addAll(Collections.nCopies(2, BEE));
-        expected.add(LEADER_ZOMBIE);
-        expected.addAll(Collections.nCopies(3, BASIC_ZOMBIE));
-        expected.addAll(Collections.nCopies(2, DESERT_ZOMBIE));
-        expected.addAll(Collections.nCopies(2, CACTUS));
-        expected.addAll(Collections.nCopies(2, SHAMAN));
-        expected.add(ARROW);
-        expected.add(ZOMBIE_AWAKENING);
-        assertEquals(expected, DeckStore.defaultDeck());
-        assertEquals(21, DeckStore.defaultDeck().size());
-        assertTrue(DeckRules.isValid(DeckStore.defaultDeck()));
+    void fitKeepsWhatIsAllowedInOrder() {
+        List<CardType> cards = new ArrayList<>(Collections.nCopies(4, BEAR));
+        cards.add(ENDER_DRAGON);
+        cards.addAll(differentCards(DeckRules.MAX_CARDS + 5));          // includes 1 more Bear
+
+        DeckRules.DeckFit fit = DeckRules.fit(cards, null);
+        assertEquals(DeckRules.MAX_CARDS, fit.deck().size());
+        assertEquals(3, Collections.frequency(fit.deck(), BEAR));
+        assertFalse(fit.deck().contains(ENDER_DRAGON));
+        assertEquals(List.of(BEAR, BEAR, BEAR), fit.deck().subList(0, 3)); // first cards first
+        assertEquals(cards.size(), fit.deck().size() + fit.rejected().size());
+        assertTrue(fit.rejected().contains(ENDER_DRAGON));
+        assertEquals(2, Collections.frequency(fit.rejected(), BEAR));
+        assertTrue(DeckRules.isValid(fit.deck()));
     }
 }

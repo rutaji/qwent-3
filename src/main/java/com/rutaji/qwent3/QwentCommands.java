@@ -8,11 +8,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.rutaji.qwent3.ai.AiRegistry;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
-import com.rutaji.qwent3.cards.deck.DeckEditor;
-import com.rutaji.qwent3.cards.deck.DeckRules;
-import com.rutaji.qwent3.cards.deck.DeckStore;
+import com.rutaji.qwent3.cards.deck.*;
 import com.rutaji.qwent3.cards.gameLogic.GameManager;
-import com.rutaji.qwent3.cards.items.CardItems;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
@@ -20,6 +17,7 @@ import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSele
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -45,11 +43,11 @@ public final class QwentCommands {
     private static final String ADMIN_PERMISSION = "qwent.admin";
 
     private final GameManager games;
-    private final DeckStore decks;
+    private final DeckSave decks;
     private final DeckEditor deckEditor;
     private final CardItems cardItems;
 
-    public QwentCommands(GameManager games, DeckStore decks, DeckEditor deckEditor, CardItems cardItems) {
+    public QwentCommands(GameManager games, DeckSave decks, DeckEditor deckEditor, CardItems cardItems) {
         this.games = games;
         this.decks = decks;
         this.deckEditor = deckEditor;
@@ -88,13 +86,11 @@ public final class QwentCommands {
 
     /** Card, monster and spell counts of the player's starting deck, and whether it is valid. */
     private void deckInfo(Player player) {
-        List<CardType> deck = decks.deck(player);
+        List<CardType> deck = decks.get(player);
         long monsters = deck.stream().filter(CardType::isMonster).count();
         player.sendMessage(Component.text("Your deck: " + deck.size() + " cards (" + monsters + " monsters, "
                 + (deck.size() - monsters) + " spells)", NamedTextColor.GOLD));
-        if (DeckRules.isValid(deck, player)) {
-            player.sendMessage(DeckRules.validMessage(deck));
-        }
+        DeckRules.tellValidity(deck, player);
     }
 
     /** {@link DeckRules#MAX_COPIES} of every card allowed in decks, as items (leftovers drop at the player's feet). */
@@ -103,7 +99,11 @@ public final class QwentCommands {
             if (DeckRules.BLACKLIST.contains(card)) {
                 continue;
             }
-            player.getInventory().addItem(cardItems.create(card, DeckRules.MAX_COPIES)).values()
+            ItemStack item = cardItems.CardToItem(card, DeckRules.MAX_COPIES);
+            if (item == null) {
+                continue;
+            }
+            player.getInventory().addItem(item).values()
                     .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         }
         player.sendMessage(Component.text("You got " + DeckRules.MAX_COPIES + " copies of every card.",

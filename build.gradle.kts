@@ -13,6 +13,8 @@ repositories {
 
 dependencies {
     paperweight.paperDevBundle("26.2.build.+")
+    // ItemsAdder API stub (method signatures only); the server's real ItemsAdder is used at runtime.
+    compileOnly("beer.devs:itemsadder-api:4.0.18-beta-10")
 
     testImplementation(platform("org.junit:junit-bom:5.13.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")

@@ -2,6 +2,8 @@ package com.rutaji.qwent3.cards.cardsRepository;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,5 +26,25 @@ public final class CardText {
         }
         lines.add(Component.text(card.description(), NamedTextColor.GRAY));
         return lines;
+    }
+
+    /**
+     * Adds Lore to card ItemStack
+     */
+    public static void applyTo(ItemStack item, CardType card) {
+        item.editMeta(meta -> {
+            meta.displayName(notItalic(Component.text(card.displayName(), NamedTextColor.GOLD)));
+            List<Component> lore = new ArrayList<>();
+            lore.add(notItalic(Component.text(card.isMonster() ? "Power: " + card.power() : "Spell",
+                    NamedTextColor.WHITE)));
+            for (Component line : lines(card)) {
+                lore.add(notItalic(line));
+            }
+            meta.lore(lore);
+        });
+    }
+
+    private static Component notItalic(Component text) {
+        return text.decoration(TextDecoration.ITALIC, false);
     }
 }

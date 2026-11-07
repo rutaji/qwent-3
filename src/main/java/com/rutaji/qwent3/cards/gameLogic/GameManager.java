@@ -4,9 +4,9 @@ import com.rutaji.qwent3.ai.AiDriver;
 import com.rutaji.qwent3.ai.AiRegistry;
 import com.rutaji.qwent3.ai.QwentAi;
 import com.rutaji.qwent3.cards.chat.ChatSender;
+import com.rutaji.qwent3.cards.deck.DeckSave;
 import com.rutaji.qwent3.cards.dialog.PileView;
 import com.rutaji.qwent3.cards.deck.DeckRules;
-import com.rutaji.qwent3.cards.deck.DeckStore;
 import com.rutaji.qwent3.cards.dialog.GameDialog;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 public final class GameManager implements Listener {
     private static final long INVITE_MILLIS = 60_000;
 
-    private final DeckStore decks;
+    private final DeckSave decks;
     private final GameDialog dialog;
     private final Map<UUID, Match> matches = new HashMap<>();
     /** Pending invites: invited player -> (inviter -> expiry time). */
@@ -48,7 +48,7 @@ public final class GameManager implements Listener {
 
     private final Logger logger;
 
-    public GameManager(DeckStore decks, GameDialog dialog, Logger logger) {
+    public GameManager(DeckSave decks, GameDialog dialog, Logger logger) {
         this.decks = decks;
         this.dialog = dialog;
         this.logger = logger;
@@ -77,7 +77,7 @@ public final class GameManager implements Listener {
             ChatSender.otherAlreadyInGame(from, to);
             return;
         }
-        if (!DeckRules.isValid(decks.deck(from), from)) {
+        if (!DeckRules.isValid(decks.get(from), from)) {
             return;
         }
         invites.computeIfAbsent(to.getUniqueId(), id -> new HashMap<>())
@@ -99,10 +99,10 @@ public final class GameManager implements Listener {
             ChatSender.inviterInAnotherGame(player, inviter);
             return;
         }
-        if (!DeckRules.isValid(decks.deck(player), player)) {
+        if (!DeckRules.isValid(decks.get(player), player)) {
             return;
         }
-        if (!DeckRules.isValid(decks.deck(inviter))) {
+        if (!DeckRules.isValid(decks.get(inviter))) {
             ChatSender.inviterDeckInvalid(player, inviter);
             return;
         }
@@ -123,7 +123,7 @@ public final class GameManager implements Listener {
     }
 
     private void start(Player player0, Player player1) {
-        GameEngine engine = GameEngine.start(decks.deck(player0), decks.deck(player1));
+        GameEngine engine = GameEngine.start(decks.get(player0), decks.get(player1));
         begin(new Match(engine, human(player0), human(player1)));
     }
 
@@ -166,11 +166,11 @@ public final class GameManager implements Listener {
             ChatSender.alreadyInGame(player);
             return;
         }
-        if (!DeckRules.isValid(decks.deck(player), player)) {
+        if (!DeckRules.isValid(decks.get(player), player)) {
             return;
         }
         QwentAi ai = AiRegistry.create(name);
-        GameEngine engine = GameEngine.start(decks.deck(player), ai.deck());
+        GameEngine engine = GameEngine.start(decks.get(player), ai.deck());
         begin(new Match(engine, human(player), new Participant.Computer(ai, name)));
     }
 

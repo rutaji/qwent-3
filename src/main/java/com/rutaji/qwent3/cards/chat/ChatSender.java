@@ -1,5 +1,7 @@
 package com.rutaji.qwent3.cards.chat;
 
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.deck.DeckRules;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -9,7 +11,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Collection;
 
-/** All chat messages about games, invites and singleplayer. */
+/** All chat messages about games, invites, singleplayer and decks. */
 public final class ChatSender {
     private ChatSender() {
     }
@@ -102,6 +104,53 @@ public final class ChatSender {
     /** The end of a game, e.g. "Qwent: You won! Final points: ...". */
     public static void gameResult(Player player, String result, String reason, TextColor color) {
         player.sendMessage(Component.text("Qwent: " + result + " " + reason, color));
+    }
+    //endregion
+
+    //region [Deck]
+    /** The deck is valid, e.g. after editing it. */
+    public static void deckValid(Player player, int cards) {
+        player.sendMessage(Component.text("Your deck is valid (" + cards + " cards).", NamedTextColor.GREEN));
+    }
+
+    /** The header before the list of the deck's problems. */
+    public static void deckInvalid(Player player) {
+        player.sendMessage(Component.text("Your deck is not valid, you can't start a game.", NamedTextColor.RED));
+    }
+
+    public static void deckTooSmall(Player player, int cards) {
+        problem(player, "It has " + cards + " cards, it needs at least " + DeckRules.MIN_CARDS + ".");
+    }
+
+    public static void deckTooBig(Player player, int cards) {
+        problem(player, "It has " + cards + " cards, the maximum is " + DeckRules.MAX_CARDS + ".");
+    }
+
+    public static void tooManyCopies(Player player, CardType card, int copies) {
+        problem(player, "It has " + copies + " copies of " + card.displayName() + ", the maximum is "
+                + DeckRules.MAX_COPIES + ".");
+    }
+
+    public static void notAllowedInDeck(Player player, CardType card) {
+        problem(player, card.displayName() + " is not allowed in decks.");
+    }
+
+    /** One line of the deck's problems, under {@link #deckInvalid}. */
+    private static void problem(Player player, String text) {
+        player.sendMessage(Component.text(" - " + text, NamedTextColor.RED));
+    }
+
+    /** A blacklisted card was put in the deck editor. */
+    public static void blacklisted(Player player, CardType card) {
+        player.sendMessage(Component.text(card.displayName() + " is blacklisted and can't be in a deck.",
+                NamedTextColor.RED));
+    }
+
+
+    /** The deck editor can't open because card items are missing (ItemsAdder). */
+    public static void deckEditorUnavailable(Player player) {
+        player.sendMessage(Component.text("The deck editor is not available right now (card items are missing). "
+                + "Try again later or tell an admin.", NamedTextColor.RED));
     }
     //endregion
 }
