@@ -22,7 +22,7 @@ public final class Qwent3 extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(games, this);
         getServer().getPluginManager().registerEvents(deckEditor, this);
-        getServer().getPluginManager().registerEvents(new DialogClickListener(games), this);
+        getServer().getPluginManager().registerEvents(new DialogClickListener(games, getLogger()), this);
 
         QwentCommands commands = new QwentCommands(games, decks, deckEditor, cardItems);
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
