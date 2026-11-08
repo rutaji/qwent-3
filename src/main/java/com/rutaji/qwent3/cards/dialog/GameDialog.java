@@ -63,10 +63,14 @@ public final class GameDialog {
      */
     private static final int SIDE_W = 100;
     private static final int SIDE_MARGIN = 8;
-    private static final int BODY_WIDTH = 1024;
+    /**
+     * Width of the wide text fields. The client adds 10 px on both sides for the scrollbar: a field wider than
+     * 960 - 20 doesn't fit a 1920x1080 screen at GUI scale 2 and is then placed from the left edge, off centre.
+     */
+    private static final int BODY_WIDTH = 940;
     /** History column left of the board (outside the centred line), and the gap between it and the left labels. */
-    // Sized for 1920x1080 at GUI scale 2 (960 px wide, 480 px from the centre): shift 10 + board line 206 + gap 15
-    // + column 235 = 466 px, leaving a small margin at the screen edge.
+    // Sized for 1920x1080 at GUI scale 2 (960 px wide, 480 px from the centre): board line 206 + gap 15 + column 235
+    // = 456 px, which also stays inside the text field (BODY_WIDTH / 2 = 470 px).
     private static final int HISTORY_W = 235;
     private static final int HISTORY_GAP = 15;
     /**
@@ -78,16 +82,17 @@ public final class GameDialog {
     private static final int TOP_LINES = 2;
     /** Width of a board line: labels on both sides and five cards. */
     private static final int BOARD_LINE_W = 2 * SIDE_W + GameState.COLUMNS * CARD_W + (GameState.COLUMNS - 1) * GAP;
+    /**
+     * Invisible padding on both sides of the empty line under the status line. The client works out a text's height by
+     * re-wrapping it at its widest line, and labels running past the side areas go over {@link #BOARD_LINE_W} for a
+     * moment. Without a wider line it counts them as wrapped: the text gets taller and a scrollbar shows up for nothing.
+     */
+    private static final int WRAP_PAD = 90;
     private static final int EXIT_W = 60;
     /** Distance of the turn text and the hearts from the board. */
     private static final int TURN_MARGIN = 120;
     /** Distance of the hearts from the board. */
     private static final int HEARTS_MARGIN = 140;
-    /**
-     * How far all card areas (game board + hand + history, mulligan hand, deck / graveyard screens) are moved left
-     * of the dialog's centre: in game the dialog content shows up this much right of the screen centre.
-     */
-    private static final int BOARD_SHIFT = 15;
     /** Minecraft's ASCII font at 2x, and the heart glyphs (U+E000 full, U+E001 empty, 18 px + 1). */
     private static final Key BIG_FONT = Key.key("qwent", "big");
     private static final Key HEARTS_FONT = Key.key("qwent", "hearts");
@@ -220,29 +225,26 @@ public final class GameDialog {
                 : historyLines(state, side, historyLineCount).iterator();
 
         Component status = statusLine(match, side).shadowColor(ShadowColor.shadowColor(0xFF2A2A2A));
-        // Every line ends with shiftPad, which moves the whole centred layout BOARD_SHIFT px to the left.
-        Component shiftPad = shiftPad();
         TextComponent.Builder board = Component.text()
-                .append(history.next()).append(padToBoard(status, textWidth(plain(status)))).append(shiftPad)
+                .append(history.next()).append(padToBoard(status, textWidth(plain(status))))
                 .append(Component.newline())
-                .append(history.next()).append(Glyphs.space(BOARD_LINE_W)).append(shiftPad);
+                .append(Glyphs.space(WRAP_PAD)).append(history.next()).append(Glyphs.space(BOARD_LINE_W + WRAP_PAD));
         for (int line = 0; line < boardLines.size(); line++) {
             board.append(Component.newline())
                     .append(history.next())
                     .append(left[line] != null ? left[line] : Glyphs.space(SIDE_W))
                     .append(boardLines.get(line))
-                    .append(right[line] != null ? right[line] : Glyphs.space(SIDE_W))
-                    .append(shiftPad);
+                    .append(right[line] != null ? right[line] : Glyphs.space(SIDE_W));
         }
         // The hand is in the same text field as the board (separate fields get a gap between them, which would
         // break the history column).
         for (int i = 0; i < HAND_GAP_LINES; i++) {
             board.append(Component.newline())
-                    .append(history.next()).append(Glyphs.space(BOARD_LINE_W)).append(shiftPad);
+                    .append(history.next()).append(Glyphs.space(BOARD_LINE_W));
         }
         for (Component handLine : handLines) {
             board.append(Component.newline())
-                    .append(history.next()).append(padToBoard(handLine, handWidth)).append(shiftPad);
+                    .append(history.next()).append(padToBoard(handLine, handWidth));
         }
         // Below the hand: [ Pass ] on the second line, the rest empty - the history continues down beside them.
         boolean canPass = myTurn && pending == null && !own.passed();
@@ -257,7 +259,7 @@ public final class GameDialog {
                                         + " gets a point.\n" + GameState.POINTS_TO_WIN + " points win the game.")));
                 content = padToBoard(pass, textWidth("[ Pass ]"));
             }
-            board.append(Component.newline()).append(history.next()).append(content).append(shiftPad);
+            board.append(Component.newline()).append(history.next()).append(content);
         }
         // Under the history column: show / hide it.
         String toggle = historyHidden ? "[ Show history ]" : "[ Hide history ]";
@@ -266,7 +268,7 @@ public final class GameDialog {
                 .clickEvent(ClickEvent.custom(Key.key(NAMESPACE, "history")));
         board.append(Component.newline())
                 .append(historyCell(toggleText, textWidth(toggle)))
-                .append(Glyphs.space(BOARD_LINE_W)).append(shiftPad);
+                .append(Glyphs.space(BOARD_LINE_W));
 
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.plainMessage(board.build().shadowColor(ShadowColor.none()), BODY_WIDTH));
@@ -327,7 +329,7 @@ public final class GameDialog {
                 if (!firstLine) {
                     rows.append(Component.newline());
                 }
-                rows.append(line).append(shiftPad());
+                rows.append(line);
                 firstLine = false;
             }
         }
@@ -358,7 +360,7 @@ public final class GameDialog {
             if (line > 0) {
                 hand.append(Component.newline());
             }
-            hand.append(Glyphs.space(indent)).append(handLines.get(line)).append(shiftPad());
+            hand.append(Glyphs.space(indent)).append(handLines.get(line));
         }
         return hand.build().shadowColor(ShadowColor.none());
     }
@@ -375,11 +377,6 @@ public final class GameDialog {
             handCells[i] = handCell(own, i, highlighted);
         }
         return rowLines(handCells);
-    }
-
-    /** Trailing space that moves a centred line {@link #BOARD_SHIFT} px to the left. */
-    private static Component shiftPad() {
-        return Glyphs.space(2 * BOARD_SHIFT);
     }
 
     /** Centres a line of known width inside exactly {@link #BOARD_LINE_W} (wider lines get negative padding). */
