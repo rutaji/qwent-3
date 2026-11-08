@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Plays up to {@code count} matching cards for the owner from a deck or graveyard ({@code pile}) of a side
  * ({@code side}, seen from the owner), one at a time. Each time the top-most matching card that can be played now is
- * taken (the deck's top is its first card, the graveyard's the one that entered it last):
+ * taken:
  * <ul>
  *     <li>a monster is shown to the owner, who picks its tile (their side, or either side if it is treacherous) -
  *     or with {@code random} it goes to a random such tile without asking; it leaves the pile when it is played;</li>
@@ -103,7 +103,7 @@ public final class PlayFromPileEffect implements Effect {
     private @Nullable CardType next(GameState state, int owner) {
         List<CardType> cards = pile == Pile.DECK
                 ? state.side(pileSide(owner)).deck()
-                : state.side(pileSide(owner)).graveyard().reversed();
+                : state.side(pileSide(owner)).graveyard();
         for (CardType card : cards) {
             if ((filter == null || filter.check(card)) && (!card.isMonster() || !tiles(state, owner, card).isEmpty())) {
                 return card;

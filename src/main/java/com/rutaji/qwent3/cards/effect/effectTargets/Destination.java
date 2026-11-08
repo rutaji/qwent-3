@@ -1,15 +1,31 @@
 package com.rutaji.qwent3.cards.effect.effectTargets;
 
-/** Where a card goes when it leaves the hand, seen from its owner. */
+import com.rutaji.qwent3.cards.cardsRepository.Pile;
+import org.jspecify.annotations.Nullable;
+
+/** Where a card goes: which pile, and where in it. */
 public enum Destination {
-    /** Into the owner's graveyard, on top (a normal discard). */
-    Graveyard,
-    /** Into the owner's deck at a random position. */
-    DeckRandom,
-    /** On top of the owner's deck: drawn next. */
-    DeckTop,
-    /** At the bottom of the owner's deck: drawn last. */
-    DeckBottom,
+    /** Into the graveyard, on top (a normal discard). */
+    GraveyardTop(Pile.GRAVEYARD),
+    /** Into the graveyard at a random position. */
+    GraveyardRandom(Pile.GRAVEYARD),
+    /** Into the deck at a random position. */
+    DeckRandom(Pile.DECK),
+    /** On top of the deck: drawn next. */
+    DeckTop(Pile.DECK),
+    /** At the bottom of the deck: drawn last. */
+    DeckBottom(Pile.DECK),
     /** Removed from the game for good. */
-    Banished
+    Banished(null);
+
+    private final @Nullable Pile pile;
+
+    Destination(@Nullable Pile pile) {
+        this.pile = pile;
+    }
+
+    /** The pile the card ends up in; null if it is banished. */
+    public @Nullable Pile pile() {
+        return pile;
+    }
 }

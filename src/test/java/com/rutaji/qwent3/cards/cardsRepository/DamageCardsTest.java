@@ -85,7 +85,7 @@ class DamageCardsTest {
         play(engine, 1, BEAR, t(1, 0, 0));
         play(engine, 0, LIGHTNING, t(0, 0, 0));
         assertEquals(0, onBoard(engine, BEAR));
-        assertEquals(List.of(LIGHTNING, BEAR), engine.state().side(0).graveyard());
+        assertEquals(List.of(BEAR, LIGHTNING), engine.state().side(0).graveyard());
         assertEquals(List.of(BEAR), engine.state().side(1).graveyard());
     }
 
@@ -99,7 +99,7 @@ class DamageCardsTest {
         play(engine, 0, LIGHTNING, t(0, 0, 0));
         assertEquals(0, onBoard(engine, CREEPER));
         assertEquals(0, onBoard(engine, BASIC_ZOMBIE), "the Creeper's death destroyed both neighbours");
-        assertEquals(List.of(CREEPER, BASIC_ZOMBIE, BASIC_ZOMBIE), engine.state().side(1).graveyard());
+        assertEquals(List.of(BASIC_ZOMBIE, BASIC_ZOMBIE, CREEPER), engine.state().side(1).graveyard());
     }
 
     @Test
@@ -234,7 +234,7 @@ class DamageCardsTest {
         engine.clickTile(0, t(1, 0, 1));             // Creeper dies
         assertNull(engine.state().unit(t(1, 0, 0)));
         assertNull(engine.state().unit(t(1, 0, 2)));
-        assertEquals(List.of(CREEPER, BEAR, BASIC_ZOMBIE), engine.state().side(1).graveyard());
+        assertEquals(List.of(BASIC_ZOMBIE, BEAR, CREEPER), engine.state().side(1).graveyard());
     }
 
     @Test

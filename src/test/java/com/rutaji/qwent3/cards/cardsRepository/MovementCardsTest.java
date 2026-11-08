@@ -58,7 +58,7 @@ class MovementCardsTest {
         assertEquals(EVIL_GOBLIN, engine.state().unit(t(0, 0, 3)).type());
         assertEquals(0, engine.state().unit(t(0, 0, 3)).owner(), "pulled over: now yours");
         assertEquals(8, engine.state().power(0));
-        assertEquals(List.of(SLIME_PISTON, BEAR), engine.state().side(0).graveyard());
+        assertEquals(List.of(BEAR, SLIME_PISTON), engine.state().side(0).graveyard());
     }
 
     @Test

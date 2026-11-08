@@ -1,7 +1,6 @@
 package com.rutaji.qwent3.cards.effect.pile;
 
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
-import com.rutaji.qwent3.cards.cardsRepository.Pile;
 import com.rutaji.qwent3.cards.cardsRepository.Tag;
 import com.rutaji.qwent3.cards.effect.ResultEffect;
 import com.rutaji.qwent3.cards.effect.effectTargets.Destination;
@@ -35,12 +34,12 @@ public final class DiscardEffect implements ResultEffect<CardType> {
     }
 
     public DiscardEffect(CardType source, int count) {
-        this(source, count, null, "a card", Destination.Graveyard);
+        this(source, count, null, "a card", Destination.GraveyardTop);
     }
 
     /** Discard one card with the tag. */
     public DiscardEffect(CardType source, Tag tag) {
-        this(source, 1, new FilterTags(Set.of(tag)), "a " + tag.displayName() + " card", Destination.Graveyard);
+        this(source, 1, new FilterTags(Set.of(tag)), "a " + tag.displayName() + " card", Destination.GraveyardTop);
     }
 
     /** @param what the card for the description, e.g. "a Zombie card" */
@@ -56,7 +55,8 @@ public final class DiscardEffect implements ResultEffect<CardType> {
     @Override
     public Component description() {
         String text = switch (destination) {
-            case Graveyard -> "discard " + what;
+            case GraveyardTop -> "discard " + what;
+            case GraveyardRandom -> "put " + what + " from your hand into a random place in your graveyard";
             case DeckRandom -> "shuffle " + what + " from your hand into your deck";
             case DeckTop -> "put " + what + " from your hand on top of your deck";
             case DeckBottom -> "put " + what + " from your hand at the bottom of your deck";
@@ -90,15 +90,7 @@ public final class DiscardEffect implements ResultEffect<CardType> {
     @Override
     public @Nullable CardType resolveWithResult(GameEngine engine, int owner, int target) {
         CardType card = engine.takeFromHand(owner, target);
-        switch (destination) {
-            case Graveyard -> engine.addToGraveyard(owner, card);
-            case DeckRandom -> engine.addToPile(owner, Pile.DECK, card, false);
-            case DeckTop -> engine.addToPile(owner, Pile.DECK, card, true);
-            case DeckBottom -> engine.addToPileBottom(owner, Pile.DECK, card);
-            case Banished -> {
-                // Gone for good.
-            }
-        }
+        engine.addToPile(owner, card, destination);
         if (++discarded < count) {
             engine.queueNext(owner, this);
         }

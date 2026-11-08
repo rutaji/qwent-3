@@ -8,13 +8,15 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
 /**
  * The data of one game between two players, side 0 and side 1, plus read-only questions about it. Knows nothing about
- * Bukkit players. Only {@link GameEngine} (same package) changes it; everyone else only reads.
+ * Bukkit players. Only {@link GameEngine} and its {@link GameHistory} (same package) change it; everyone else only
+ * reads.
  *
  * Board: {@link #ROWS} rows of {@link #COLUMNS}; each side owns {@link #ROWS_PER_SIDE} rows. Tile index =
  * side * TILES_PER_SIDE + localRow * COLUMNS + column, local row 0 being the front row (towards the opponent).
@@ -25,6 +27,8 @@ public final class GameState {
     public static final int MAX_HAND = 10;
     public static final int MULLIGAN_REDRAWS = 2;
     public static final int POINTS_TO_WIN = 2;
+    /** Every round gives at least one point, so one more than both players one point short of winning. */
+    public static final int MAX_ROUNDS = POINTS_TO_WIN * 2 - 1;
     public static final int ROUND_DRAW = 1;
     public static final int ROUND_REDRAWS = 1;
     public static final int ROWS_PER_SIDE = 2;
@@ -56,8 +60,8 @@ public final class GameState {
     final Deque<QueuedEffect> queue = new ArrayDeque<>();
     final List<LogEntry> log = new ArrayList<>();
     int round = 1;
-    /** Power of both sides at the end of the previous round, or null in the first round. */
-    int @Nullable [] lastRoundPower;
+    /** Power of both sides at the end of every round: [round - 1][side]; -1 for rounds not finished yet. */
+    final int[][] roundPower = new int[MAX_ROUNDS][2];
     /** Who starts the current round. */
     int starter;
     Phase phase = Phase.PLAYING;
@@ -68,6 +72,9 @@ public final class GameState {
         this.sides = new Side[] {new Side(deck0), new Side(deck1)};
         this.starter = firstPlayer;
         this.current_player = firstPlayer;
+        for (int[] power : roundPower) {
+            Arrays.fill(power, -1);
+        }
     }
 
     //region [Board geometry]
@@ -146,9 +153,9 @@ public final class GameState {
         return sides[side].points;
     }
 
-    /** A side's power at the end of the previous round, or -1 in the first round. */
+    /** A side's power at the end of the round before the current one, or -1 in the first round. */
     public int lastRoundPower(int side) {
-        return lastRoundPower == null ? -1 : lastRoundPower[side];
+        return round == 1 ? -1 : roundPower[round - 2][side];
     }
 
     /** The winning side once the game is over (by points), or -1 for a draw. */

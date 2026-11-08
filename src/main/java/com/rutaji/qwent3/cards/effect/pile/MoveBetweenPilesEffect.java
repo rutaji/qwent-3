@@ -3,6 +3,7 @@ package com.rutaji.qwent3.cards.effect.pile;
 import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
+import com.rutaji.qwent3.cards.effect.effectTargets.Destination;
 import com.rutaji.qwent3.cards.effect.effectTargets.SideTarget;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.CardFilter;
 import com.rutaji.qwent3.cards.gameLogic.GameEngine;
@@ -12,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Moves every matching card from one deck or graveyard to another, of either side (seen from the owner), e.g. "discard
- * every Brown Mushroom from your deck". Each goes on top or to a random position. Cancelled if there is no such card.
+ * every Brown Mushroom from your deck". Each goes to {@code destination}. Cancelled if there is no such card.
  * No target to pick.
  */
 public final class MoveBetweenPilesEffect implements Effect {
@@ -23,29 +24,30 @@ public final class MoveBetweenPilesEffect implements Effect {
     private final SideTarget fromSide;
     private final Pile fromPile;
     private final SideTarget toSide;
-    private final Pile toPile;
-    private final boolean onTop;
+    private final Destination destination;
 
     /**
      * @param what the cards for the description, e.g. "every Brown Mushroom"
-     * @param onTop true = on top (of a graveyard: as if they entered it last), false = shuffled in at random positions
      */
     public MoveBetweenPilesEffect(CardType source, @Nullable CardFilter filter, String what,
-                                  SideTarget fromSide, Pile fromPile, SideTarget toSide, Pile toPile, boolean onTop) {
+                                  SideTarget fromSide, Pile fromPile, SideTarget toSide, Destination destination) {
         this.source = source;
         this.filter = filter;
         this.what = what;
         this.fromSide = fromSide;
         this.fromPile = fromPile;
         this.toSide = toSide;
-        this.toPile = toPile;
-        this.onTop = onTop;
+        this.destination = destination;
     }
 
     @Override
     public Component description() {
-        return Component.text(source.displayName() + ": move " + what + " from " + pileText(fromSide, fromPile)
-                + " to " + pileText(toSide, toPile));
+        String from = pileText(fromSide, fromPile);
+        Pile toPile = destination.pile();
+        String text = toPile == null
+                ? "banish " + what + " from " + from
+                : "move " + what + " from " + from + " to " + pileText(toSide, toPile);
+        return Component.text(source.displayName() + ": " + text);
     }
 
     @Override
@@ -65,8 +67,7 @@ public final class MoveBetweenPilesEffect implements Effect {
 
     @Override
     public void resolve(GameEngine engine, int owner, int target) {
-        engine.moveBetweenPiles(side(fromSide, owner), fromPile, side(toSide, owner), toPile, filter,
-                onTop);
+        engine.moveBetweenPiles(side(fromSide, owner), fromPile, side(toSide, owner), filter, destination);
     }
 
     private static int side(SideTarget target, int owner) {

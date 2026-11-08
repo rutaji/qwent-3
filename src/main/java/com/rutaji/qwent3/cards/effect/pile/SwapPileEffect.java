@@ -10,7 +10,7 @@ import net.kyori.adventure.text.Component;
 
 /**
  * Swaps the contents of two piles, each a deck or graveyard of either side (seen from the owner), without shuffling:
- * the cards keep their order. No target to pick.
+ * the top card of one becomes the top card of the other. No target to pick.
  */
 public final class SwapPileEffect implements Effect {
     private final CardType source;

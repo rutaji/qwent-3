@@ -19,7 +19,7 @@ import java.util.Set;
  * the owner); the result is the banished card. Cancelled if there is no such card. No target to pick.
  * Combine it with {@link #then} for "banish ... to ...".
  */
-public final class BanishEffect implements ResultEffect<CardType> {
+public final class RandomBanishment implements ResultEffect<CardType> {
     private final CardType source;
     /** Null = any card. */
     private final @Nullable CardFilter filter;
@@ -28,7 +28,7 @@ public final class BanishEffect implements ResultEffect<CardType> {
     private final Pile pile;
 
     /** @param what the card for the description, e.g. "a random Plant" */
-    public BanishEffect(CardType source, @Nullable CardFilter filter, String what, SideTarget side, Pile pile) {
+    public RandomBanishment(CardType source, @Nullable CardFilter filter, String what, SideTarget side, Pile pile) {
         this.source = source;
         this.filter = filter;
         this.what = what;
@@ -37,8 +37,8 @@ public final class BanishEffect implements ResultEffect<CardType> {
     }
 
     /** A random card with the tag from the owner's graveyard. */
-    public static BanishEffect fromGraveyard(CardType source, Tag tag) {
-        return new BanishEffect(source, new FilterTags(Set.of(tag)), "a random " + tag.displayName(),
+    public static RandomBanishment fromGraveyard(CardType source, Tag tag) {
+        return new RandomBanishment(source, new FilterTags(Set.of(tag)), "a random " + tag.displayName(),
                 SideTarget.Owner, Pile.GRAVEYARD);
     }
 

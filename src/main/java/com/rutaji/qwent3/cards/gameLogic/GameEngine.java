@@ -3,18 +3,16 @@ package com.rutaji.qwent3.cards.gameLogic;
 import com.rutaji.qwent3.cards.effect.Effect;
 import com.rutaji.qwent3.cards.cardsRepository.CardType;
 import com.rutaji.qwent3.cards.cardsRepository.Pile;
+import com.rutaji.qwent3.cards.effect.effectTargets.Destination;
 import com.rutaji.qwent3.cards.effect.effectTargets.filters.CardFilter;
-import com.rutaji.qwent3.cards.gameLogic.GameState.LogEntry;
 import com.rutaji.qwent3.cards.gameLogic.GameState.Phase;
 import com.rutaji.qwent3.cards.gameLogic.GameState.QueuedEffect;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Predicate;
 
 import static com.rutaji.qwent3.cards.gameLogic.GameState.BOARD_SIZE;
 import static com.rutaji.qwent3.cards.gameLogic.GameState.MAX_HAND;
@@ -45,10 +43,12 @@ public final class GameEngine {
     private static final int MAX_RESOLVE_STEPS = 1000;
 
     private final GameState state;
+    private final GameHistory history;
 
     /** @param deck0 side 0's deck, top card first (already shuffled); copied. Same for deck1. */
     public GameEngine(List<CardType> deck0, List<CardType> deck1, int firstPlayer) {
         this.state = new GameState(deck0, deck1, firstPlayer);
+        this.history = new GameHistory(state);
     }
 
     /**
@@ -74,36 +74,6 @@ public final class GameEngine {
     public GameState state() {
         return state;
     }
-
-    //region [History]
-    private void log(int actor, String text, boolean played) {
-        state.log.add(new LogEntry(actor, text, played));
-    }
-
-    /** Logs an effect about to resolve (or being cancelled), with what it targets. */
-    private void logEffect(Effect effect, int owner, int target, boolean cancelled) {
-        String text = PlainTextComponentSerializer.plainText().serialize(effect.description());
-        if (cancelled) {
-            text += " - no target";
-        } else if (target >= 0) {
-            text += " -> " + targetName(effect, owner, target);
-        } else {
-            String detail = effect.logDetail(state, owner);
-            if (detail != null) {
-                text += " -> " + detail;
-            }
-        }
-        log(owner, text, false);
-    }
-
-    private String targetName(Effect effect, int owner, int target) {
-        if (effect.targetKind() == Effect.TargetKind.HAND) {
-            return state.sides[owner].hand.get(target).displayName();
-        }
-        Unit unit = state.board[target];
-        return unit != null ? unit.type().displayName() : "empty tile";
-    }
-    //endregion
 
     //region [Player input]
 
@@ -133,7 +103,7 @@ public final class GameEngine {
         Effect effect = pending.effect();
         if (pending.owner() == side && effect.targetKind() == kind && effect.isValidTarget(state, side, target)) {
             state.queue.removeFirst();
-            logEffect(effect, side, target, false);
+            history.logEffect(effect, side, target, false);
             effect.resolve(this, side, target);
             resolveQueue();
         }
@@ -178,7 +148,7 @@ public final class GameEngine {
         }
         CardType returned = s.hand.get(index);
         s.redrawn.add(returned);
-        s.deck.add(ThreadLocalRandom.current().nextInt(s.deck.size() + 1), returned);
+        addToPile(side, returned, Destination.DeckRandom);
         int pick = 0;
         for (int i = 0; i < s.deck.size(); i++) {
             if (!s.redrawn.contains(s.deck.get(i))) {
@@ -214,14 +184,14 @@ public final class GameEngine {
                 return;
             }
             removeSelectedFromHand(side);
-            log(side, card.displayName(), true);
+            history.log(side, card.displayName(), true);
             play(side, card, tile);
         } else {
             removeSelectedFromHand(side);
-            log(side, card.displayName(), true);
+            history.log(side, card.displayName(), true);
             // A used spell goes to the graveyard right away; its effects then resolve from the queue,
             // followed by the opponent's units reacting to the spell.
-            state.sides[side].graveyard.add(card);
+            addToGraveyard(side, card);
             castSpell(side, card, false);
         }
         resolveQueue();
@@ -252,7 +222,7 @@ public final class GameEngine {
         }
         state.sides[side].passed = true;
         state.sides[side].selectedHandIndex = -1;
-        log(side, "Passed", false);
+        history.log(side, "Passed", false);
         nextTurn();
     }
 
@@ -281,7 +251,7 @@ public final class GameEngine {
 
     private void endRound() {
         int[] power = {state.power(0), state.power(1)};
-        state.lastRoundPower = power;
+        state.roundPower[state.round - 1] = power;
         if (power[0] >= power[1]) {
             state.sides[0].points++;
         }
@@ -292,7 +262,7 @@ public final class GameEngine {
         for (int tile = 0; tile < BOARD_SIZE; tile++) {
             Unit unit = state.board[tile];
             if (unit != null) {
-                state.sides[unit.owner()].graveyard.add(unit.type());
+                addToGraveyard(unit.owner(), unit.type());
                 state.board[tile] = null;
             }
         }
@@ -301,7 +271,7 @@ public final class GameEngine {
             return;
         }
         state.round++;
-        log(-1, "--- Round " + state.round + " ---", false);
+        history.log(-1, "--- Round " + state.round + " ---", false);
         state.starter = other(state.starter);
         for (int side = 0; side < 2; side++) {
             state.sides[side].passed = false;
@@ -337,12 +307,12 @@ public final class GameEngine {
             QueuedEffect head = state.queue.peekFirst();
             if (!head.effect().hasValidTargets(state, head.owner())) {
                 state.queue.removeFirst();
-                logEffect(head.effect(), head.owner(), -1, true);
+                history.logEffect(head.effect(), head.owner(), -1, true);
             } else if (head.effect().needsTarget()) {
                 return;
             } else {
                 state.queue.removeFirst();
-                logEffect(head.effect(), head.owner(), -1, false);
+                history.logEffect(head.effect(), head.owner(), -1, false);
                 head.effect().resolve(this, head.owner(), -1);
             }
         }
@@ -360,7 +330,7 @@ public final class GameEngine {
     public void castSpell(int side, CardType spell, boolean next) {
         List<Effect> effects = spell.onPlay(null);
         if (next) {
-            log(side, "Casts " + spell.displayName(), false);
+            history.log(side, "Casts " + spell.displayName(), false);
             for (Effect effect : effects.reversed()) {
                 queueNext(side, effect);
             }
@@ -425,7 +395,7 @@ public final class GameEngine {
             return;
         }
         state.board[tile] = null;
-        state.sides[unit.owner()].graveyard.add(unit.type());
+        addToGraveyard(unit.owner(), unit.type());
         queue(unit.owner(), unit.type().onDeath(unit));
     }
 
@@ -454,29 +424,26 @@ public final class GameEngine {
     }
 
     /**
-     * {@code side} draws the top-most matching cards of {@code pileSide}'s deck or graveyard (the graveyard's top is
-     * the card that entered it last), one at a time; null filter = any card. With a full hand the card goes to
-     * {@code side}'s graveyard. Returns how many were drawn: fewer than {@code count} if the pile runs out of such
-     * cards.
+     * {@code side} draws the top-most matching cards of {@code pileSide}'s deck or graveyard, one at a time; null
+     * filter = any card. With a full hand the card goes to {@code side}'s graveyard. Returns how many were drawn: fewer
+     * than {@code count} if the pile runs out of such cards.
      */
     public int draw(int side, int count, @Nullable CardFilter filter, int pileSide, Pile pile) {
         List<CardType> from = state.sides[pileSide].pile(pile);
         Side to = state.sides[side];
-        boolean fromEnd = pile == Pile.GRAVEYARD;
         int drawn = 0;
-        for (int n = 0; n < from.size() && drawn < count; ) {
+        for (int i = 0; i < from.size() && drawn < count; ) {
             if (from == to.graveyard && to.hand.size() >= MAX_HAND) {
                 // It would go straight back on top of the same graveyard.
                 break;
             }
-            int i = fromEnd ? from.size() - 1 - n : n;
             if (filter != null && !filter.check(from.get(i))) {
-                n++;
+                i++;
                 continue;
             }
             CardType card = from.remove(i);
             if (to.hand.size() >= MAX_HAND) {
-                to.graveyard.add(card);
+                addToGraveyard(side, card);
             } else {
                 to.hand.add(card);
             }
@@ -491,43 +458,34 @@ public final class GameEngine {
     }
 
     public void addToGraveyard(int side, CardType card) {
-        state.sides[side].graveyard.add(card);
+        addToPile(side, card, Destination.GraveyardTop);
     }
 
-    /**
-     * Puts a card into a side's deck or graveyard: on top (the deck's top is its first card, the graveyard's the one
-     * that entered it last) or at a random position.
-     */
-    public void addToPile(int side, Pile pile, CardType card, boolean onTop) {
-        List<CardType> cards = state.sides[side].pile(pile);
-        if (!onTop) {
-            cards.add(ThreadLocalRandom.current().nextInt(cards.size() + 1), card);
-        } else if (pile == Pile.DECK) {
-            cards.addFirst(card);
-        } else {
-            cards.add(card);
+    /** Puts a card into a side's deck or graveyard, as the destination says. The top of both is index 0. */
+    public void addToPile(int side, CardType card, Destination destination) {
+        Side s = state.sides[side];
+        switch (destination) {
+            case GraveyardTop -> s.graveyard.addFirst(card);
+            case GraveyardRandom -> addAtRandom(s.graveyard, card);
+            case DeckTop -> s.deck.addFirst(card);
+            case DeckRandom -> addAtRandom(s.deck, card);
+            case DeckBottom -> s.deck.add(card);
+            case Banished -> {
+                // Gone for good.
+            }
         }
     }
 
-    /**
-     * Puts a card at the bottom of a side's deck or graveyard (the deck's bottom is its last card, drawn last; the
-     * graveyard's the one that entered it first).
-     */
-    public void addToPileBottom(int side, Pile pile, CardType card) {
-        List<CardType> cards = state.sides[side].pile(pile);
-        if (pile == Pile.DECK) {
-            cards.add(card);
-        } else {
-            cards.addFirst(card);
-        }
+    private static void addAtRandom(List<CardType> cards, CardType card) {
+        cards.add(ThreadLocalRandom.current().nextInt(cards.size() + 1), card);
     }
 
     /**
-     * Moves every matching card (null filter = any) from a side's deck or graveyard into a deck or graveyard (the same
-     * side's or the other's), each one on top or at a random position, see {@link #addToPile}; returns how many.
+     * Moves every matching card (null filter = any) from a side's deck or graveyard to a destination of a side (the
+     * same or the other), see {@link #addToPile}; returns how many.
      */
-    public int moveBetweenPiles(int fromSide, Pile from, int toSide, Pile to, @Nullable CardFilter filter,
-                                boolean onTop) {
+    public int moveBetweenPiles(int fromSide, Pile from, int toSide, @Nullable CardFilter filter,
+                                Destination destination) {
         List<CardType> source = state.sides[fromSide].pile(from);
         // Take them all out first, so moving within one pile doesn't meet the same cards again.
         List<CardType> moved = new ArrayList<>();
@@ -539,14 +497,14 @@ public final class GameEngine {
             }
         }
         for (CardType card : moved) {
-            addToPile(toSide, to, card, onTop);
+            addToPile(toSide, card, destination);
         }
         return moved.size();
     }
 
     /**
-     * Swaps the contents of two piles (a deck or graveyard of either side), keeping both orders: the cards keep their
-     * list positions, e.g. a graveyard's first card becomes the deck's top card. Nothing happens for the same pile.
+     * Swaps the contents of two piles (a deck or graveyard of either side) without shuffling: the top card of one
+     * becomes the top card of the other, and so on down. Nothing happens for the same pile.
      */
     public void swapPiles(int sideA, Pile pileA, int sideB, Pile pileB) {
         List<CardType> a = state.sides[sideA].pile(pileA);
@@ -561,20 +519,17 @@ public final class GameEngine {
         b.addAll(oldA);
     }
 
-    /** Takes one copy of a card out of a side's deck or graveyard; false if there is none. */
+    /** Takes the top-most copy of a card out of a side's deck or graveyard; false if there is none. */
     public boolean removeFromPile(int side, Pile pile, CardType card) {
         return state.sides[side].pile(pile).remove(card);
     }
 
     /** Removes a random matching card (null filter = any) from a side's deck or graveyard for good; null if none. */
     public @Nullable CardType banishRandom(int side, Pile pile, @Nullable CardFilter filter) {
-        return removeRandom(state.sides[side].pile(pile), card -> filter == null || filter.check(card));
-    }
-
-    private static @Nullable CardType removeRandom(List<CardType> cards, Predicate<CardType> filter) {
+        List<CardType> cards = state.sides[side].pile(pile);
         List<Integer> matching = new ArrayList<>();
         for (int i = 0; i < cards.size(); i++) {
-            if (filter.test(cards.get(i))) {
+            if (filter == null || filter.check(cards.get(i))) {
                 matching.add(i);
             }
         }

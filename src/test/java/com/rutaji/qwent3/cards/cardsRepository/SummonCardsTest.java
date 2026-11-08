@@ -80,7 +80,7 @@ class SummonCardsTest {
         engine.clickTile(0, t(0, 0, 0));
         engine.clickTile(0, t(0, 0, 1));
         assertEquals(2, onBoard(engine, BASIC_ZOMBIE));
-        assertEquals(List.of(BEAR, ZOMBIE_AWAKENING), engine.state().side(0).graveyard());
+        assertEquals(List.of(ZOMBIE_AWAKENING, BEAR), engine.state().side(0).graveyard());
     }
 
     @Test

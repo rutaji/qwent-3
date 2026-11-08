@@ -9,7 +9,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/** One player's cards in a game: deck (top = index 0), hand, graveyard, and their mulligan / pass state. */
+/** One player's cards in a game: deck and graveyard (top = index 0 of both), hand, and their mulligan / pass state. */
 public final class Side {
     final List<CardType> deck;
     final List<CardType> hand = new ArrayList<>();
@@ -39,11 +39,12 @@ public final class Side {
         return deck.size();
     }
 
-    /** The deck in draw order (top first). Don't show this order to the player. */
+    /** The deck, top first. Don't show this order to the player. */
     public List<CardType> deck() {
         return Collections.unmodifiableList(deck);
     }
 
+    /** The graveyard, top (newest) first. */
     public List<CardType> graveyard() {
         return Collections.unmodifiableList(graveyard);
     }

@@ -72,7 +72,7 @@ class PileCardsTest {
         engine.clickHand(0, handIndex(engine, 0, BEAR));
         assertNotNull(engine.state().pendingEffect());
         engine.clickHand(0, handIndex(engine, 0, BASIC_ZOMBIE));
-        assertEquals(List.of(FERTILIZING, BEAR, BASIC_ZOMBIE), engine.state().side(0).graveyard());
+        assertEquals(List.of(BASIC_ZOMBIE, BEAR, FERTILIZING), engine.state().side(0).graveyard());
         assertEquals(3, engine.state().side(0).handSize());
         assertTrue(handIndex(engine, 0, GRAVEL) >= 0 && handIndex(engine, 0, EVIL_GOBLIN) >= 0);
     }
@@ -124,12 +124,12 @@ class PileCardsTest {
     }
 
     @Test
-    void switcharooSwapsDeckAndGraveyardKeepingOrder() {
+    void switcharooSwapsDeckAndGraveyardTopToTop() {
         GameEngine engine = withDecks(List.of(SWITCHAROO, BEAR, GRAVEL), 1, List.of(BEAR), 1, 0);
         engine.addToGraveyard(0, ARROW);
         engine.addToGraveyard(0, BASIC_ZOMBIE);
         play(engine, 0, SWITCHAROO, t(0, 0, 0));
-        assertEquals(List.of(ARROW, BASIC_ZOMBIE, SWITCHAROO), engine.state().side(0).deck());
+        assertEquals(List.of(SWITCHAROO, BASIC_ZOMBIE, ARROW), engine.state().side(0).deck());
         assertEquals(List.of(BEAR, GRAVEL), engine.state().side(0).graveyard());
     }
 
@@ -183,8 +183,8 @@ class PileCardsTest {
         engine.play(1, BASIC_ZOMBIE, t(1, 0, 1));
         play(engine, 0, MIRROR, t(0, 0, 0));
         assertNull(engine.state().unit(t(1, 0, 1)), "copied Gravel destroyed the lowest");
-        assertEquals(List.of(ARROW, BEAR, BASIC_ZOMBIE), engine.state().side(1).graveyard(), "Gravel banished");
-        assertEquals(List.of(MIRROR, GRAVEL), engine.state().side(0).graveyard(), "cast Gravel goes to the caster's graveyard");
+        assertEquals(List.of(BASIC_ZOMBIE, BEAR, ARROW), engine.state().side(1).graveyard(), "Gravel banished");
+        assertEquals(List.of(GRAVEL, MIRROR), engine.state().side(0).graveyard(), "cast Gravel goes to the caster's graveyard");
         assertTrue(engine.state().log().stream().anyMatch(e -> e.text().equals("Casts Gravel")));
     }
 
