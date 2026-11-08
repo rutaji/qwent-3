@@ -1,7 +1,7 @@
 package com.rutaji.qwent3.ai;
 
-import com.rutaji.qwent3.cards.CardType;
-import com.rutaji.qwent3.cards.DeckStore;
+import com.rutaji.qwent3.cards.cardsRepository.CardType;
+import com.rutaji.qwent3.cards.deck.DefaultDeck;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public interface QwentAi {
     /** The AI's deck for a game, top card first is irrelevant (it is shuffled). Default: the default starting deck. */
     default List<CardType> deck() {
-        return DeckStore.defaultDeck();
+        return DefaultDeck.defaultDeck();
     }
 
     AiAction decide(AiView view);

@@ -214,6 +214,14 @@ font_images:
     path: font/cards/mirror.png
     scale_ratio: 60
     y_position: 7
+  card_darty_text:
+    path: font/cards/darty.png
+    scale_ratio: 60
+    y_position: 7
+  card_piddy_text:
+    path: font/cards/piddy.png
+    scale_ratio: 60
+    y_position: 7
   tile_empty_text:
     path: font/cards/tile_empty.png
     scale_ratio: 60
@@ -594,3 +602,17 @@ items:
       generate: true
       textures:
         - item/cards/mirror
+  card_darty:
+    display_name: Darty
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/darty
+  card_piddy:
+    display_name: Piddy
+    resource:
+      material: PAPER
+      generate: true
+      textures:
+        - item/cards/piddy

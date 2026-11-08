@@ -1,6 +1,8 @@
 package com.rutaji.qwent3.cards.effect;
 
-import com.rutaji.qwent3.cards.GameState;
+import com.rutaji.qwent3.cards.effect.combinator.ToEffect;
+import com.rutaji.qwent3.cards.gameLogic.GameEngine;
+import com.rutaji.qwent3.cards.gameLogic.GameState;
 import net.kyori.adventure.text.Component;
 import org.jspecify.annotations.Nullable;
 
@@ -58,8 +60,14 @@ public interface Effect {
     }
 
     /**
-     * Applies the effect. {@code target} is the picked tile or hand index (see {@link #targetKind()}),
-     * or -1 if {@link #needsTarget()} is false.
+     * Applies the effect, changing the game through the engine (read it with {@code engine.state()}).
+     * {@code target} is the picked tile or hand index (see {@link #targetKind()}), or -1 if {@link #needsTarget()}
+     * is false.
      */
-    void resolve(GameState state, int owner, int target);
+    void resolve(GameEngine engine, int owner, int target);
+
+    /** This, then the other effects (in order); see {@link ToEffect}. */
+    default Effect then(Effect... next) {
+        return new ToEffect(this, next);
+    }
 }

@@ -20,7 +20,7 @@ CARDS = ["arrow", "two_arrows", "gravel", "lightning",
          "thorny_rose", "brown_mushroom", "weeds", "switcharoo", "silverfish", "stone_bricks", "infestation", "piston",
          "slime_piston", "drunk_brawler", "librarian",
          "swarm", "splash_of_strength", "harsh_world", "bee", "healer", "shaman", "bard", "warlock", "music_disc",
-         "enderman", "shulker", "endermite", "ender_dragon", "summon_ender_dragon", "mirror"]  # must match CardType (lower case)
+         "enderman", "shulker", "endermite", "ender_dragon", "summon_ender_dragon", "mirror", "darty", "piddy"]  # must match CardType (lower case)
 ART_W, ART_H = 64, 96      # size of placeholder <card>.png made for missing art
 FRAME_W, FRAME_H = 40, 60  # tile_empty / select_frame placeholders
 ICON_SIZE = 32             # placeholder item texture textures/item/cards/<card>.png made when missing
